@@ -24,7 +24,7 @@ api.post("/hook", (req, res) => {
       handleNoteEvent(object_attributes, project_id, merge_request);
       break;
     case "pipeline":
-      handlePipelineEvent(req.body.project.id, object_attributes);
+      handlePipelineEvent(req.body);
     // console.log(req.body)
     default:
       // console.log(object_kind)
@@ -74,16 +74,24 @@ function handleTestEvent(merge_request: any, project_id: ProjectId) {
 }
 /**  **handleReportRequest** invokes request report that writes a note into MR discussion */
 async function handleReportRequest(project_id: ProjectId, merge_request: any) {
-  const pipelines = <Array<Pipeline>>await Promise.resolve(gitlabApi.Pipelines.all(project_id))
-  const pipeline_id = pipelines.sort((a, b) => { return a.id + b.id }).filter(v => v.ref === merge_request.target_branch)[0].id
+  const pipelines = <Pipeline[]>await Promise.resolve(gitlabApi.Pipelines.all(project_id))
+  const pipeline_id = pipelines.sort((a, b) => { return a.id + b.id })
+    .filter(v => v.ref === merge_request.target_branch)[0].id
   requestReport(project_id, pipeline_id, merge_request);
 }
 
-function handlePipelineEvent(projectId: ProjectId, attribs) {
-  const status = attribs.detailed_status
-  const MR_ID = parseInt(attribs.variables.find(o => o.key === "MR_ID").value)
+function handlePipelineEvent(pipeline) {
+  const projectId = pipeline.project.id
+  const status = pipeline.object_attributes.detailed_status
+  const MR_ID = parseInt(pipeline.object_attributes.variables.find(v => v.key === "MR_ID").value)
+  const jobID = pipeline.builds.find(b => b.name === "Code Quality").id;
+  const reportUrl = generateReportURL(pipeline.project.web_url, jobID);
   if (status === "passed")
-    reply(projectId, MR_ID, "Tests Passed!")
+    reply(projectId, MR_ID, "Tests Passed! " + reportUrl)
+}
+
+function generateReportURL(projectURL: string, jobID: number | string) {
+  return projectURL + '/-/jobs/' + jobID + "/artifacts/raw/gl-code-quality-report.html?inline=false";
 }
 
 // TODO: Extract requestReport to an interface so that you can have diffirent types of reports (code quality, coverage, etc.) 
@@ -96,7 +104,7 @@ function requestReport(project_id: ProjectId, pipeline_id: number, merge_request
     // TODO: Expose report name as function argument 
     // TODO: Extract artifact path from pipeline variable 
     const web_url = (<Job[]>_).filter(_ => _.name === "Code Quality")[0].web_url;
-    const reportUrl = web_url + "/artifacts/raw/gl-code-quality-report.html?inline=false";
+    const reportUrl = web_url + "/artifacts/raw/gl-code-quality-report.html";
     const badgeUrl = `${merge_request.target.web_url}/badges/${merge_request.target_branch}/pipeline.svg`;
     const message = `![pipeline status](${badgeUrl})<br> Download code quality [report](${reportUrl})`;
     reply(project_id, merge_request.iid, message);
