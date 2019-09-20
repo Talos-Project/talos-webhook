@@ -103,8 +103,8 @@ function requestReport(project_id: ProjectId, pipeline_id: number, merge_request
   gitlabApi.Pipelines.showJobs(project_id, pipeline_id).then(_ => {
     // TODO: Expose report name as function argument 
     // TODO: Extract artifact path from pipeline variable 
-    const web_url = (<Job[]>_).filter(_ => _.name === "Code Quality")[0].web_url;
-    const reportUrl = web_url + "/artifacts/raw/gl-code-quality-report.html";
+    const jobID = (<Job[]>_).filter(_ => _.name === "Code Quality")[0].id;
+    const reportUrl = generateReportURL(merge_request.target.web_url, jobID)
     const badgeUrl = `${merge_request.target.web_url}/badges/${merge_request.target_branch}/pipeline.svg`;
     const message = `![pipeline status](${badgeUrl})<br> Download code quality [report](${reportUrl})`;
     reply(project_id, merge_request.iid, message);
