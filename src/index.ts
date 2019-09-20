@@ -3,6 +3,8 @@ import * as bodyparser from 'body-parser'
 import { Gitlab, ProjectId, Branches } from 'gitlab'
 import { Job } from './Job';
 import { Pipeline } from './Pipeline';
+import { MergeRequestEvent } from './MergeRequestEvent';
+import { User } from './User';
 
 require("dotenv").config();
 
@@ -10,6 +12,10 @@ const gitlabApi = new Gitlab({
   host: process.env.host,
   token: process.env.token
 });
+
+let botInfo: User;
+
+gitlabApi.Users.current().then(u => botInfo = <User>u)
 
 const PORT = process.env.NODE_PORT || 3000;
 const app = express();
@@ -25,6 +31,10 @@ api.post("/hook", (req, res) => {
       break;
     case "pipeline":
       handlePipelineEvent(req.body);
+      break;
+    case "merge_request":
+      handleWelcomeEvent(req.body);
+      break;
     // console.log(req.body)
     default:
       // console.log(object_kind)
@@ -58,9 +68,6 @@ function handleNoteEvent(object_attributes: any, project_id: ProjectId, merge_re
     // Use https://api.thecatapi.com/v1/images/search?format=json&results_per_page=1 for better caturday api 
     gitlabApi.MergeRequestNotes.create(project_id, merge_request.iid, "![cat](https://cataas.com/cat)");
   }
-  if (note.includes('/report')) {
-    handleReportRequest(project_id, merge_request);
-  }
 }
 
 function handleTestEvent(merge_request: any, project_id: ProjectId) {
@@ -72,13 +79,6 @@ function handleTestEvent(merge_request: any, project_id: ProjectId) {
     variables
   }).catch(err => console.log(err));
 }
-/**  **handleReportRequest** invokes request report that writes a note into MR discussion */
-async function handleReportRequest(project_id: ProjectId, merge_request: any) {
-  const pipelines = <Pipeline[]>await Promise.resolve(gitlabApi.Pipelines.all(project_id))
-  const pipeline_id = pipelines.sort((a, b) => { return a.id + b.id })
-    .filter(v => v.ref === merge_request.target_branch)[0].id
-  requestReport(project_id, pipeline_id, merge_request);
-}
 
 function handlePipelineEvent(pipeline) {
   const projectId = pipeline.project.id
@@ -86,8 +86,10 @@ function handlePipelineEvent(pipeline) {
   const MR_ID = parseInt(pipeline.object_attributes.variables.find(v => v.key === "MR_ID").value)
   const jobID = pipeline.builds.find(b => b.name === "Code Quality").id;
   const reportUrl = generateReportURL(pipeline.project.web_url, jobID);
+  const badgeUrl = `${pipeline.project.web_url}/badges/${pipeline.object_attributes.ref}/pipeline.svg`;
+  const message = `![pipeline status](${badgeUrl})<br> Download code quality [report](${reportUrl})`;
   if (status === "passed")
-    reply(projectId, MR_ID, "Tests Passed! " + reportUrl)
+    reply(projectId, MR_ID, message)
 }
 
 function generateReportURL(projectURL: string, jobID: number | string) {
@@ -95,20 +97,23 @@ function generateReportURL(projectURL: string, jobID: number | string) {
 }
 
 // TODO: Extract requestReport to an interface so that you can have diffirent types of reports (code quality, coverage, etc.) 
-function requestReport(project_id: ProjectId, pipeline_id: number, merge_request: any) {
-  // TODO: Get all artifacts from jobs with stage test 
-  // TODO: Unzip json reports from artifacts and append them to merge request discussion 
-  // TODO: Attach commit hash to artifacts 
-  // TODO: Let users choose the type (code quality) and format (html,json) of report 
-  gitlabApi.Pipelines.showJobs(project_id, pipeline_id).then(_ => {
-    // TODO: Expose report name as function argument 
-    // TODO: Extract artifact path from pipeline variable 
-    const jobID = (<Job[]>_).filter(_ => _.name === "Code Quality")[0].id;
-    const reportUrl = generateReportURL(merge_request.target.web_url, jobID)
-    const badgeUrl = `${merge_request.target.web_url}/badges/${merge_request.target_branch}/pipeline.svg`;
-    const message = `![pipeline status](${badgeUrl})<br> Download code quality [report](${reportUrl})`;
-    reply(project_id, merge_request.iid, message);
-  });
+// TODO: Get all artifacts from jobs with stage test 
+// TODO: Unzip json reports from artifacts and append them to merge request discussion 
+// TODO: Attach commit hash to artifacts 
+// TODO: Let users choose the type (code quality) and format (html,json) of report 
+// TODO: Expose report name as function argument 
+// TODO: Extract artifact path from pipeline variable 
+
+function handleWelcomeEvent(mr: MergeRequestEvent) {
+  if (mr.object_attributes.action === "open")
+    reply(mr.project.id, mr.object_attributes.iid, generateWelcomeMessage(mr.user))
+}
+
+function generateWelcomeMessage(user: User) {
+  return `
+    Hi @${user.username}! Thanks for your MR.
+    Once your changes are ready to be merged type \`/assign @${botInfo.username} \`
+  `
 }
 
 function reply(projectId: ProjectId, mrId: any, text: string) {
