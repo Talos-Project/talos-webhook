@@ -5,6 +5,7 @@ import { Job } from './Job';
 import { Pipeline } from './Pipeline';
 import { MergeRequestEvent } from './MergeRequestEvent';
 import { User } from './User';
+import { NoteEvent } from './NoteEvent'
 
 require("dotenv").config();
 
@@ -27,7 +28,8 @@ api.post("/hook", (req, res) => {
 
   switch (object_kind) {
     case "note":
-      handleNoteEvent(object_attributes, project_id, merge_request);
+      // handleNoteEvent(object_attributes, project_id, merge_request);
+      handleNoteEvent(req.body);
       break;
     case "pipeline":
       handlePipelineEvent(req.body);
@@ -51,22 +53,30 @@ app.listen(PORT, () => {
   console.log(`Listening on ${PORT}`);
 });
 
-function handleNoteEvent(object_attributes: any, project_id: ProjectId, merge_request: any) {
-  const { note } = object_attributes;
+function handleNoteEvent(noteEvt: NoteEvent) {
+  const { note } = noteEvt.object_attributes;
+
+  // Prevent bot's command execution
+  if (noteEvt.user.username === botInfo.username) {
+    return
+  }
+
   if (note.includes('/test')) {
-    handleTestEvent(merge_request, project_id);
+    handleTestEvent(noteEvt.merge_request, noteEvt.project_id);
   }
   if (note.includes('/retest') || note.includes('/ready-for-test'))
-    gitlabApi.Pipelines.create(project_id, merge_request.source_branch);
+    gitlabApi.Pipelines.create(noteEvt.project_id, noteEvt.merge_request.source_branch);
+    reply(noteEvt.project_id, noteEvt.merge_request.iid, 
+      `@${noteEvt.user.username}, your requst for tests has been submitted! I will post test results once they are ready.`)
   if (
     note.includes('/approve') &&
-    merge_request.assignee_id === object_attributes.author_id &&
-    object_attributes.author_id !== merge_request.author_id
+    noteEvt.merge_request.assignee_id === noteEvt.object_attributes.author_id &&
+    noteEvt.object_attributes.author_id !== noteEvt.merge_request.author_id
   )
-    gitlabApi.MergeRequests.accept(project_id, merge_request.iid);
+    gitlabApi.MergeRequests.accept(noteEvt.project_id, noteEvt.merge_request.iid);
   if (note.includes('/meow')) {
     // Use https://api.thecatapi.com/v1/images/search?format=json&results_per_page=1 for better caturday api 
-    gitlabApi.MergeRequestNotes.create(project_id, merge_request.iid, "![cat](https://cataas.com/cat)");
+    gitlabApi.MergeRequestNotes.create(noteEvt.project_id, noteEvt.merge_request.iid, "![cat](https://cataas.com/cat)");
   }
 }
 
@@ -86,14 +96,26 @@ function handlePipelineEvent(pipeline) {
   const MR_ID = parseInt(pipeline.object_attributes.variables.find(v => v.key === "MR_ID").value)
   const jobID = pipeline.builds.find(b => b.name === "Code Quality").id;
   const reportUrl = generateReportURL(pipeline.project.web_url, jobID);
-  const badgeUrl = `${pipeline.project.web_url}/badges/${pipeline.object_attributes.ref}/pipeline.svg`;
-  const message = `![pipeline status](${badgeUrl})<br> Download code quality [report](${reportUrl})`;
+  // const badgeUrl = `${pipeline.project.web_url}/badges/${pipeline.object_attributes.ref}/pipeline.svg`;
+  // const message = `![pipeline status](${badgeUrl})<br> Download code quality [report](${reportUrl})`;
   if (status === "passed")
-    reply(projectId, MR_ID, message)
+    reply(projectId, MR_ID, generateReportSummary(reportUrl))
 }
 
 function generateReportURL(projectURL: string, jobID: number | string) {
   return projectURL + '/-/jobs/' + jobID + "/artifacts/raw/gl-code-quality-report.html?inline=false";
+}
+
+function generateReportSummary(reportURL: string) {
+  return `
+The following table represents several test results, say \`/test\` to start them over: 
+
+Test Name | Status | Details 
+---|:---:|--- 
+Code Quality | :white_check_mark: | [Link](${reportURL}) 
+Unit Tests | :warning: | N/A 
+Code Coverage | :no_entry: | Link 
+  `
 }
 
 // TODO: Extract requestReport to an interface so that you can have diffirent types of reports (code quality, coverage, etc.) 
