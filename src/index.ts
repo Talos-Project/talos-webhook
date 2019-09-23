@@ -5,7 +5,10 @@ import { Job } from './Job';
 import { Pipeline } from './Pipeline';
 import { MergeRequestEvent } from './MergeRequestEvent';
 import { User } from './User';
-import { NoteEvent } from './NoteEvent'
+import { NoteEvent } from './NoteEvent';
+import * as YAML from 'yaml'
+import { RepoBlob } from './RepoBlob';
+import { Collaborators } from './Collaborators';
 
 require("dotenv").config();
 
@@ -53,7 +56,7 @@ app.listen(PORT, () => {
   console.log(`Listening on ${PORT}`);
 });
 
-function handleNoteEvent(noteEvt: NoteEvent) {
+async function handleNoteEvent(noteEvt: NoteEvent) {
   const { note } = noteEvt.object_attributes;
 
   // Prevent bot's command execution
@@ -62,18 +65,19 @@ function handleNoteEvent(noteEvt: NoteEvent) {
   }
 
   if (note.includes('/test')) {
+    const { approvers, reviewers } = await getCollaborators(noteEvt.project_id)
+    if (!(approvers.includes(noteEvt.user.username) || reviewers.includes(noteEvt.user.username)))
+      return;
     handleTestEvent(noteEvt.merge_request, noteEvt.project_id);
-  }
-  if (note.includes('/retest') || note.includes('/ready-for-test'))
-    gitlabApi.Pipelines.create(noteEvt.project_id, noteEvt.merge_request.source_branch);
-    reply(noteEvt.project_id, noteEvt.merge_request.iid, 
+    reply(noteEvt.project_id, noteEvt.merge_request.iid,
       `@${noteEvt.user.username}, your requst for tests has been submitted! I will post test results once they are ready.`)
-  if (
-    note.includes('/approve') &&
-    noteEvt.merge_request.assignee_id === noteEvt.object_attributes.author_id &&
-    noteEvt.object_attributes.author_id !== noteEvt.merge_request.author_id
-  )
-    gitlabApi.MergeRequests.accept(noteEvt.project_id, noteEvt.merge_request.iid);
+  }
+  if (note.includes('/approve')) {
+    const { approvers } = await getCollaborators(noteEvt.project_id)
+    if (approvers.includes(noteEvt.user.username) && 
+        noteEvt.merge_request.author_id !== noteEvt.object_attributes.author_id)
+      gitlabApi.MergeRequests.accept(noteEvt.project_id, noteEvt.merge_request.iid);
+  }
   if (note.includes('/meow')) {
     // Use https://api.thecatapi.com/v1/images/search?format=json&results_per_page=1 for better caturday api 
     gitlabApi.MergeRequestNotes.create(noteEvt.project_id, noteEvt.merge_request.iid, "![cat](https://cataas.com/cat)");
@@ -136,6 +140,13 @@ function generateWelcomeMessage(user: User) {
     Hi @${user.username}! Thanks for your MR.
     Once your changes are ready to be merged type \`/assign @${botInfo.username} \`
   `
+}
+
+function getCollaborators(project_id: number | string): Promise<Collaborators> {
+  return gitlabApi.RepositoryFiles.show(project_id, 'OWNERS', 'master')
+    .then(_ => {
+      return YAML.parse(Buffer.from((<RepoBlob>_).content, "base64").toString("ascii"))
+    })
 }
 
 function reply(projectId: ProjectId, mrId: any, text: string) {
