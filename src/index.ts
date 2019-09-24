@@ -19,8 +19,6 @@ const gitlabApi = new Gitlab({
   token: process.env.token
 });
 
-// gitlabApi.MergeRequests.edit(582, 37, { assignee_id: 48 })
-
 let botInfo: User;
 
 gitlabApi.Users.current().then(u => botInfo = <User>u)
@@ -89,6 +87,15 @@ async function handleNoteEvent(noteEvt: NoteEvent) {
       noteEvt.merge_request.author_id !== noteEvt.object_attributes.author_id)
       gitlabApi.MergeRequests.accept(noteEvt.project_id, noteEvt.merge_request.iid);
   }
+  if (note.includes('/ready-for-review')) {
+    const { approvers, reviewers } = await getCollaborators(noteEvt.project_id)
+    const assignee_id = await gitlabApi.Users.all()
+      .then(_ => (<User[]>_)
+      .filter(u => approvers.includes(u.username)).map(u => u.id).find(uid => uid !== noteEvt.merge_request.author_id))
+    console.log(assignee_id)
+    gitlabApi.MergeRequests.edit(noteEvt.project_id, noteEvt.merge_request.iid, { assignee_id })
+    reply(noteEvt.project_id, noteEvt.merge_request.iid, "/cc @" + reviewers.join(" @"))
+  }
   if (note.includes('/meow')) {
     // Use https://api.thecatapi.com/v1/images/search?format=json&results_per_page=1 for better caturday api
     gitlabApi.MergeRequestNotes.create(noteEvt.project_id, noteEvt.merge_request.iid, "![cat](https://cataas.com/cat)");
@@ -111,8 +118,6 @@ function handlePipelineEvent(pipeline) {
   const MR_ID = parseInt(pipeline.object_attributes.variables.find(v => v.key === "MR_ID").value)
   const jobID = pipeline.builds.find(b => b.name === "Code Quality").id;
   const reportUrl = generateReportURL(pipeline.project.web_url, jobID);
-  // const badgeUrl = `${pipeline.project.web_url}/badges/${pipeline.object_attributes.ref}/pipeline.svg`;
-  // const message = `![pipeline status](${badgeUrl})<br> Download code quality [report](${reportUrl})`;
   if (status === "passed")
     reply(projectId, MR_ID, generateReportSummary(reportUrl))
 }
@@ -149,7 +154,7 @@ function handleWelcomeEvent(mr: MergeRequestEvent) {
 function generateWelcomeMessage(user: User) {
   return `
     Hi @${user.username}! Thanks for your MR.
-    Once your changes are ready to be merged type \`/assign @${botInfo.username} \`
+    Once your changes are ready to be merged type \`/ready-for-review\` so that I can assign reviewers.
   `
 }
 
