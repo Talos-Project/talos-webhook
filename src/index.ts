@@ -88,23 +88,26 @@ async function handleNoteEvent(noteEvt: NoteEvent) {
       gitlabApi.MergeRequests.accept(noteEvt.project_id, noteEvt.merge_request.iid);
   }
   if (note.includes('/ready-for-review')) {
-    const { approvers, reviewers } = await getCollaborators(noteEvt.project_id)
-    const potentialAssignees = await gitlabApi.Users.all()
-      .then(_ => (<User[]>_)
-      .filter(u => approvers.includes(u.username)))
-    const assignee_id = potentialAssignees.map(u => u.id).find(uid => uid !== noteEvt.merge_request.author_id)
-    const assigneeName = potentialAssignees.find(a => a.id === assignee_id).username
-    gitlabApi.MergeRequests.edit(noteEvt.project_id, noteEvt.merge_request.iid, { assignee_id })
-    const messageForReviewers = `Grettings @${reviewers.join(", @")}
-    ! You have been selected for review. You can trigger tests using \`/test\` command. 
-    A detailed report will be sumbitted on this thread. 
-    Once you are satisfied with MR and test results type \`/lgtm\` to signal your positive feedback to approver (@${assigneeName}).`;
-    reply(noteEvt.project_id, noteEvt.merge_request.iid, messageForReviewers)
+    handleReadyForReviewEvent(noteEvt)
   }
   if (note.includes('/meow')) {
     // Use https://api.thecatapi.com/v1/images/search?format=json&results_per_page=1 for better caturday api
     gitlabApi.MergeRequestNotes.create(noteEvt.project_id, noteEvt.merge_request.iid, "![cat](https://cataas.com/cat)");
   }
+}
+
+async function handleReadyForReviewEvent(evt: NoteEvent) {
+    const owners = await getCollaborators(evt.project_id)
+    const users = await gitlabApi.Users.all().then(_ => (<User[]>_))
+    const approvers = users.filter(u => owners.approvers.includes(u.username)).filter(u => u.id !== evt.merge_request.author_id)
+    const reviewers = users.filter(u => owners.reviewers.includes(u.username)).filter(u => u.id !== evt.merge_request.author_id)
+    const assignee = approvers[0]
+    gitlabApi.MergeRequests.edit(evt.project_id, evt.merge_request.iid, { assignee_id: assignee.id })
+    const messageForReviewers = `Grettings @${reviewers.map(r => r.username).join(", @")}
+    ! You have been selected for review. You can trigger tests using \`/test\` command. 
+    A detailed report will be sumbitted on this thread. 
+    Once you are satisfied with MR and test results type \`/lgtm\` to signal your positive feedback to approver (@${assignee.name}).`;
+    reply(evt.project_id, evt.merge_request.iid, messageForReviewers)
 }
 
 function handleTestEvent(merge_request: any, project_id: ProjectId) {
