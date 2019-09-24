@@ -9,13 +9,17 @@ import { NoteEvent } from './NoteEvent';
 import * as YAML from 'yaml'
 import { RepoBlob } from './RepoBlob';
 import { Collaborators } from './Collaborators';
+import { MergeRequest } from './MergeRequest';
 
 require("dotenv").config();
 
+const ownersFileName = 'OWNERS';
 const gitlabApi = new Gitlab({
   host: process.env.host,
   token: process.env.token
 });
+
+// gitlabApi.MergeRequests.edit(582, 37, { assignee_id: 48 })
 
 let botInfo: User;
 
@@ -72,14 +76,21 @@ async function handleNoteEvent(noteEvt: NoteEvent) {
     reply(noteEvt.project_id, noteEvt.merge_request.iid,
       `@${noteEvt.user.username}, your requst for tests has been submitted! I will post test results once they are ready.`)
   }
+  if (note.includes('/lgtm')) {
+    const { approvers, reviewers } = await getCollaborators(noteEvt.project_id)
+    if (!(approvers.includes(noteEvt.user.username) || reviewers.includes(noteEvt.user.username)))
+      return;
+    const labels = await gitlabApi.MergeRequests.show(noteEvt.project_id, noteEvt.merge_request.iid).then(mr => (<MergeRequest>mr).labels)
+    gitlabApi.MergeRequests.edit(noteEvt.project_id, noteEvt.merge_request.iid, { labels: labels.join(",").concat(",lgtm") })
+  }
   if (note.includes('/approve')) {
     const { approvers } = await getCollaborators(noteEvt.project_id)
-    if (approvers.includes(noteEvt.user.username) && 
-        noteEvt.merge_request.author_id !== noteEvt.object_attributes.author_id)
+    if (approvers.includes(noteEvt.user.username) &&
+      noteEvt.merge_request.author_id !== noteEvt.object_attributes.author_id)
       gitlabApi.MergeRequests.accept(noteEvt.project_id, noteEvt.merge_request.iid);
   }
   if (note.includes('/meow')) {
-    // Use https://api.thecatapi.com/v1/images/search?format=json&results_per_page=1 for better caturday api 
+    // Use https://api.thecatapi.com/v1/images/search?format=json&results_per_page=1 for better caturday api
     gitlabApi.MergeRequestNotes.create(noteEvt.project_id, noteEvt.merge_request.iid, "![cat](https://cataas.com/cat)");
   }
 }
@@ -143,7 +154,7 @@ function generateWelcomeMessage(user: User) {
 }
 
 function getCollaborators(project_id: number | string): Promise<Collaborators> {
-  return gitlabApi.RepositoryFiles.show(project_id, 'OWNERS', 'master')
+  return gitlabApi.RepositoryFiles.show(project_id, ownersFileName, 'master')
     .then(_ => {
       return YAML.parse(Buffer.from((<RepoBlob>_).content, "base64").toString("ascii"))
     })
