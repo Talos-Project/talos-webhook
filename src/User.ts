@@ -4,3 +4,8 @@ export interface User {
   username: string;
   avatar_url: string;
 }
+
+export interface Users {
+  current(): Promise<User>
+  all(): Promise<User[]>
+}

@@ -1,3 +1,4 @@
+export type ProjectId = number | string;
 export interface Project {
-    id: number | string;
+    id: ProjectId
 }
