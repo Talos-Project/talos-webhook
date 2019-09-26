@@ -1,10 +1,10 @@
 import { GitProvider, SnippetId } from './GitProvider';
 import { Reader } from './Reader';
 import * as YAML from 'yaml';
+import { Reviewer } from './Reviewer';
+import { Writer } from './Writer';
 
-type Reviewer = string;
-
-export class GitlabReviewers implements Reader<Promise<Reviewer[]>> {
+export class GitlabReviewers implements Reader<Promise<Reviewer[]>>, Writer<Reviewer[]> {
 
   private gitProvider: GitProvider;
 
@@ -15,6 +15,10 @@ export class GitlabReviewers implements Reader<Promise<Reviewer[]>> {
     const snippet = this.gitProvider.Snippets.content(await this.resolveId()).then(_ => _)
     const reviewers: Reviewer[] = YAML.parse(await snippet)
     return reviewers
+  }
+
+  async write(reviewers: Reviewer[]): Promise<any> {
+     return this.gitProvider.Snippets.edit(await this.resolveId(), { content: YAML.stringify(reviewers) })
   }
 
   private resolveId(): Promise<SnippetId> {

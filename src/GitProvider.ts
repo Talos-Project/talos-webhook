@@ -24,4 +24,5 @@ export interface RepositoryFiles {
 export interface Snippets {
     content(snippetId: SnippetId): Promise<Content>
     all(options?: object): Promise<Snippet[]>
+    edit(snippetId: SnippetId, options?: object): Promise<Snippet>
 }
