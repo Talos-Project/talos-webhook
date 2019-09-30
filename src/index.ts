@@ -131,6 +131,8 @@ async function handleReadyForReviewEvent(evt: NoteEvent) {
     "Reviewers can accept the MR using `/lgtm` command. Approver can merge the MR using `/approve`."
   ]
 
+  // TODO Update weight maps one reviewers are assigned
+
   reply(evt.project_id, evt.merge_request.iid, messageForReviewers.join('\n'))
 }
 
