@@ -1,8 +1,6 @@
 import * as express from 'express'
 import * as bodyparser from 'body-parser'
-import { Gitlab, ProjectId, Branches } from 'gitlab'
-import { Job } from './Job';
-import { Pipeline } from './Pipeline';
+import { Gitlab, ProjectId } from 'gitlab'
 import { MergeRequestEvent } from './MergeRequestEvent';
 import { User } from './User';
 import { NoteEvent } from './NoteEvent';
@@ -10,6 +8,7 @@ import * as YAML from 'yaml'
 import { RepoBlob } from './RepoBlob';
 import { Collaborators } from './Collaborators';
 import { MergeRequest } from './MergeRequest';
+import { GitlabReviewers } from './GitlabReviewers';
 
 require("dotenv").config();
 
@@ -28,12 +27,11 @@ const app = express();
 const api = express.Router();
 
 api.post("/hook", (req, res) => {
-  const { project_id, object_kind, object_attributes, builds, merge_request, ref } = req.body;
+  const { object_kind } = req.body;
   console.log(req.body);
 
   switch (object_kind) {
     case "note":
-      // handleNoteEvent(object_attributes, project_id, merge_request);
       handleNoteEvent(req.body);
       break;
     case "pipeline":
@@ -42,9 +40,8 @@ api.post("/hook", (req, res) => {
     case "merge_request":
       handleWelcomeEvent(req.body);
       break;
-    // console.log(req.body)
     default:
-      // console.log(object_kind)
+      console.log("Unhandled request")
       break;
   }
 
@@ -97,17 +94,44 @@ async function handleNoteEvent(noteEvt: NoteEvent) {
 }
 
 async function handleReadyForReviewEvent(evt: NoteEvent) {
-    const owners = await getCollaborators(evt.project_id)
-    const users = await gitlabApi.Users.all().then(_ => (<User[]>_))
-    const approvers = users.filter(u => owners.approvers.includes(u.username)).filter(u => u.id !== evt.merge_request.author_id)
-    const reviewers = users.filter(u => owners.reviewers.includes(u.username)).filter(u => u.id !== evt.merge_request.author_id)
-    const assignee = approvers[0]
-    gitlabApi.MergeRequests.edit(evt.project_id, evt.merge_request.iid, { assignee_id: assignee.id })
-    const messageForReviewers = `Grettings @${reviewers.map(r => r.username).join(", @")}
-    ! You have been selected for review. You can trigger tests using \`/test\` command. 
-    A detailed report will be sumbitted on this thread. 
-    Once you are satisfied with MR and test results type \`/lgtm\` to signal your positive feedback to approver (@${assignee.name}).`;
-    reply(evt.project_id, evt.merge_request.iid, messageForReviewers)
+  // TODO Move Blunderbuss selection to a function
+  // and invoke that function if only assignee is not assigned
+  const gReviewers = new GitlabReviewers(gitlabApi, 'Reviewers.WeightMap')
+  const owners = await getCollaborators(evt.project_id)
+  const users = await gitlabApi.Users.all().then(_ => (<User[]>_))
+
+  const potentialApprovers = users.filter(u => owners.approvers.includes(u.username))
+    .filter(u => u.id !== evt.merge_request.author_id).map(r => r.username)
+
+  const assignee = users.find(u => u.username === potentialApprovers[Math.floor(Math.random() * potentialApprovers.length)])
+
+  const potentialReviewers = users.filter(u => owners.reviewers.includes(u.username))
+    .filter(u => u.id !== evt.merge_request.author_id).map(r => r.username)
+
+  const ReviewersWeigthMaps = await gReviewers.getAll()
+
+  const zeroWeightRevs = potentialReviewers
+    .filter(r => !ReviewersWeigthMaps.map(wm => wm.name).includes(r));
+
+  // Updating current state of reviewers weightmap with new users from owners file
+  zeroWeightRevs.forEach(r => gReviewers.update({ name: r, weight: 0 }))
+
+  const reviewers = (await gReviewers.getAll())
+    .filter(wm => potentialReviewers.includes(wm.name))
+    .sort((a, b) => a.weight - b.weight).map(r => r.name).slice(0, 2)
+
+  gitlabApi.MergeRequests.edit(evt.project_id, evt.merge_request.iid, { assignee_id: assignee.id })
+
+  const messageForReviewers = [
+    "The following table represents the participants of this MR",
+    "","Name | Role", "---|---", 
+    "@nijat | Author", 
+    `@${assignee.username} | Approver`,
+    ...reviewers.map( r => `@${r} | Reviewer`), "",
+    "Reviewers can accept the MR using `/lgtm` command. Approver can merge the MR using `/approve`."
+  ]
+
+  reply(evt.project_id, evt.merge_request.iid, messageForReviewers.join('\n'))
 }
 
 function handleTestEvent(merge_request: any, project_id: ProjectId) {
