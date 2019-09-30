@@ -79,10 +79,13 @@ async function handleNoteEvent(noteEvt: NoteEvent) {
     gitlabApi.MergeRequests.edit(noteEvt.project_id, noteEvt.merge_request.iid, { labels: labels.join(",").concat(",lgtm") })
   }
   if (note.includes('/approve')) {
-    const { approvers } = await getCollaborators(noteEvt.project_id)
-    if (approvers.includes(noteEvt.user.username) &&
-      noteEvt.merge_request.author_id !== noteEvt.object_attributes.author_id)
-      gitlabApi.MergeRequests.accept(noteEvt.project_id, noteEvt.merge_request.iid);
+    const users = await gitlabApi.Users.all().then(_ => (<User[]>_))
+    const userId = users.find(u => u.username === noteEvt.user.username).id;
+    if (userId === noteEvt.merge_request.assignee_id)
+    // TODO Handle rebasing
+    // https://docs.gitlab.com/ee/api/merge_requests.html#rebase-a-merge-request
+      gitlabApi.MergeRequests.accept(noteEvt.project_id, noteEvt.merge_request.iid)
+        .catch(e => console.log(e));
   }
   if (note.includes('/ready-for-review')) {
     handleReadyForReviewEvent(noteEvt)
@@ -124,10 +127,10 @@ async function handleReadyForReviewEvent(evt: NoteEvent) {
 
   const messageForReviewers = [
     "The following table represents the participants of this MR",
-    "","Name | Role", "---|---", 
-    "@nijat | Author", 
+    "", "Name | Role", "---|---",
+    "@nijat | Author",
     `@${assignee.username} | Approver`,
-    ...reviewers.map( r => `@${r} | Reviewer`), "",
+    ...reviewers.map(r => `@${r} | Reviewer`), "",
     "Reviewers can accept the MR using `/lgtm` command. Approver can merge the MR using `/approve`."
   ]
 
