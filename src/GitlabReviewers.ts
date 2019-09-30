@@ -5,7 +5,12 @@ import { Writer } from './Writer';
 
 export type Name = string
 export type Weight = number
-export type Reviewers = Map<Name, Weight>
+export type Reviewers = Array<WeightMap>
+
+interface WeightMap {
+  name: string
+  weight: number
+}
 
 export class GitlabReviewers implements Reader<Promise<Reviewers>>, Writer<Reviewers> {
 
@@ -14,10 +19,10 @@ export class GitlabReviewers implements Reader<Promise<Reviewers>>, Writer<Revie
     this.gitProvider = gitProvider;
   }
   async read(): Promise<Reviewers> {
-    let reviewers: Reviewers = new Map<Name, Weight>();
+    const reviewers: Reviewers = []
     const snippet = this.gitProvider.Snippets.content(await this.resolveId()).then(_ => _)
-    const r = YAML.parse(await snippet);
-    Object.keys(r).forEach((k) => reviewers.set(k,r[k]))
+    const payload = YAML.parse(await snippet);
+    Object.keys(payload).forEach((name) => reviewers.push({ name, weight: payload[name] }))
     return reviewers
   }
 
