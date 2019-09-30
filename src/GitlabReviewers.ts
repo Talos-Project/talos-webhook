@@ -10,13 +10,14 @@ export type Reviewers = Map<Name, Weight>
 export class GitlabReviewers implements Reader<Promise<Reviewers>>, Writer<Reviewers> {
 
   private gitProvider: GitProvider;
-
-  constructor(gitProvider) {
+  constructor(gitProvider, path?: string) {
     this.gitProvider = gitProvider;
   }
   async read(): Promise<Reviewers> {
+    let reviewers: Reviewers = new Map<Name, Weight>();
     const snippet = this.gitProvider.Snippets.content(await this.resolveId()).then(_ => _)
-    const reviewers: Reviewers = YAML.parse(await snippet)
+    const r = YAML.parse(await snippet);
+    Object.keys(r).forEach((k) => reviewers.set(k,r[k]))
     return reviewers
   }
 
