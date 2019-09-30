@@ -1,7 +1,5 @@
 import { GitProvider, SnippetId } from './GitProvider';
-import { Reader } from './Reader';
 import * as YAML from 'yaml';
-import { Writer } from './Writer';
 
 export type Name = string
 export type Weight = number
@@ -12,25 +10,57 @@ interface WeightMap {
   weight: number
 }
 
-export class GitlabReviewers implements Reader<Promise<Reviewers>>, Writer<Reviewers> {
+export class GitlabReviewers {
 
   private gitProvider: GitProvider;
+  private reviewers: Map<Name, Weight>;
+  private path: string = "Reviewers.WeightMaps";
+
   constructor(gitProvider, path?: string) {
+    if (typeof path === 'string') {
+      this.path = path
+    }
     this.gitProvider = gitProvider;
-  }
-  async read(): Promise<Reviewers> {
-    const reviewers: Reviewers = []
-    const snippet = this.gitProvider.Snippets.content(await this.resolveId()).then(_ => _)
-    const payload = YAML.parse(await snippet);
-    Object.keys(payload).forEach((name) => reviewers.push({ name, weight: payload[name] }))
-    return reviewers
+    this.reviewers = new Map<Name, Weight>();
   }
 
-  async write(reviewers: Reviewers): Promise<any> {
-     return this.gitProvider.Snippets.edit(await this.resolveId(), { content: YAML.stringify(reviewers) })
+  async getAll() {
+    // try to fetch data if empty
+    if (this.reviewers.size === 0) {
+      await this.read()
+    }
+    const payload = new Array<WeightMap>()
+    this.reviewers.forEach((weight, name) => payload.push({ name, weight }))
+    return payload
+  }
+
+  async insert(wm: WeightMap) {
+    this.update(wm)
+  }
+
+  async update(wm: WeightMap) {
+    const revs = await this.getAll()
+    this.reviewers.set(wm.name, wm.weight)
+    this.write()
+  }
+
+  async delete(name: Name) {
+    this.reviewers.delete(name)
+    this.write()
+  }
+
+  private async read() {
+    const snippet = this.gitProvider.Snippets.content(await this.resolveId()).then(_ => _)
+    const payload = YAML.parse(await snippet);
+    Object.keys(payload).forEach((name) => this.reviewers.set(name, payload[name]))
+  }
+
+  private async write() {
+    // return success status
+    this.gitProvider.Snippets.edit(await this.resolveId(), { content: YAML.stringify(this.reviewers) })
   }
 
   private resolveId(): Promise<SnippetId> {
-    return this.gitProvider.Snippets.all({ public: false }).then(s => s.find(s => s.title === 'reviewers').id)
+    return this.gitProvider.Snippets.all({ public: false }).then(s => s.find(s => s.title === this.path).id)
   }
 }
