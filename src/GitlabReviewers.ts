@@ -1,5 +1,6 @@
-import { GitProvider, SnippetId } from './GitProvider';
 import * as YAML from 'yaml';
+import { Storage } from './Storage';
+import { GitlabStorage } from './GitlabStorage';
 
 export type Name = string
 export type Weight = number
@@ -12,15 +13,15 @@ interface WeightMap {
 
 export class GitlabReviewers {
 
-  private gitProvider: GitProvider;
   private reviewers: Map<Name, Weight>;
   private path: string = "Reviewers.WeightMaps";
+  private storage: Storage<Promise<string>, string>;
 
-  constructor(gitProvider, path?: string) {
+  constructor(provider, path?: string) {
     if (typeof path === 'string') {
       this.path = path
     }
-    this.gitProvider = gitProvider;
+    this.storage = new GitlabStorage(provider,this.path);
     this.reviewers = new Map<Name, Weight>();
   }
 
@@ -60,17 +61,13 @@ export class GitlabReviewers {
   }
 
   private async read() {
-    const snippet = this.gitProvider.Snippets.content(await this.resolveId()).then(_ => _)
-    const payload = YAML.parse(await snippet);
+    const snippet = await this.storage.read()
+    const payload = YAML.parse(snippet);
     Object.keys(payload).forEach((name) => this.reviewers.set(name, payload[name]))
   }
 
   private async write() {
     // FIXME return success status
-    this.gitProvider.Snippets.edit(await this.resolveId(), { content: YAML.stringify(this.reviewers) })
-  }
-
-  private resolveId(): Promise<SnippetId> {
-    return this.gitProvider.Snippets.all({ public: false }).then(s => s.find(s => s.title === this.path).id)
+    this.storage.write(YAML.stringify(this.reviewers))
   }
 }
