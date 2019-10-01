@@ -40,7 +40,6 @@ export class GitlabReviewers {
   }
 
   async update(wm: WeightMap) {
-    const revs = await this.getAll()
     this.reviewers.set(wm.name, wm.weight)
     this.write()
   }
