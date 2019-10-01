@@ -6,7 +6,7 @@ export class GitlabStorage implements Storage<Promise<string>,string> {
     private path: string;
     private gitProvider: GitProvider;
 
-    constructor(provider, path: string) {
+    constructor(provider: GitProvider, path: string) {
         this.gitProvider = provider
         this.path = path
     }

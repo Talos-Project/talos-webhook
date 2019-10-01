@@ -11,7 +11,7 @@ abstract class Owners {
     private ownersFilePath = 'OWNERS';
     private owners = {};
 
-    constructor(type, provider, projectId: ProjectId, path?: string) {
+    constructor(type, provider: GitProvider, projectId: ProjectId, path?: string) {
         this.type = type
         this.gitProvider = provider
         this.projectId = projectId

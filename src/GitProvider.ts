@@ -18,11 +18,11 @@ export interface Snippet {
 }
 
 export interface RepositoryFiles {
-    show(project_id: ProjectId, filename: string, branch: string): Promise<RepoBlob>
+    show(project_id: ProjectId, filename: string, branch: string): Promise<RepoBlob> | any
 }
 
 export interface Snippets {
-    content(snippetId: SnippetId): Promise<Content>
-    all(options?: object): Promise<Snippet[]>
-    edit(snippetId: SnippetId, options?: object): Promise<Snippet>
+    content(snippetId: SnippetId): Promise<Content> | any
+    all(options?: object): Promise<Snippet[]> | any
+    edit(snippetId: SnippetId, options?: object): Promise<Snippet> | any
 }
