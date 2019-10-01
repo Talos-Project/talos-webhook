@@ -49,6 +49,16 @@ export class GitlabReviewers {
     this.write()
   }
 
+  async increaseWeight(wm: WeightMap) {
+    this.reviewers.set(wm.name, this.reviewers.get(wm.name) + wm.weight)
+    this.write()
+  }
+
+  async decreaseWeight(wm: WeightMap) {
+    this.reviewers.set(wm.name, this.reviewers.get(wm.name) - wm.weight)
+    this.write()
+  }
+
   private async read() {
     const snippet = this.gitProvider.Snippets.content(await this.resolveId()).then(_ => _)
     const payload = YAML.parse(await snippet);
@@ -56,7 +66,7 @@ export class GitlabReviewers {
   }
 
   private async write() {
-    // return success status
+    // FIXME return success status
     this.gitProvider.Snippets.edit(await this.resolveId(), { content: YAML.stringify(this.reviewers) })
   }
 
