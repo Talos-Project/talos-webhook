@@ -82,8 +82,9 @@ async function handleNoteEvent(noteEvt: NoteEvent) {
     const users = await gitlabApi.Users.all().then(_ => (<User[]>_))
     const userId = users.find(u => u.username === noteEvt.user.username).id;
     if (userId === noteEvt.merge_request.assignee_id)
-    // TODO Handle rebasing
-    // https://docs.gitlab.com/ee/api/merge_requests.html#rebase-a-merge-request
+      // TODO Update weight maps once MR is closed
+      // TODO Handle rebasing
+      // https://docs.gitlab.com/ee/api/merge_requests.html#rebase-a-merge-request
       gitlabApi.MergeRequests.accept(noteEvt.project_id, noteEvt.merge_request.iid)
         .catch(e => console.log(e));
   }
@@ -99,9 +100,10 @@ async function handleNoteEvent(noteEvt: NoteEvent) {
 async function handleReadyForReviewEvent(evt: NoteEvent) {
   // TODO Move Blunderbuss selection to a function
   // and invoke that function if only assignee is not assigned
-  const gReviewers = new GitlabReviewers(gitlabApi, 'Reviewers.WeightMap')
+  const gReviewers = new GitlabReviewers(gitlabApi)
   const owners = await getCollaborators(evt.project_id)
   const users = await gitlabApi.Users.all().then(_ => (<User[]>_))
+  const author = users.find(u => evt.merge_request.author_id === u.id).username
 
   const potentialApprovers = users.filter(u => owners.approvers.includes(u.username))
     .filter(u => u.id !== evt.merge_request.author_id).map(r => r.username)
@@ -128,13 +130,17 @@ async function handleReadyForReviewEvent(evt: NoteEvent) {
   const messageForReviewers = [
     "The following table represents the participants of this MR",
     "", "Name | Role", "---|---",
-    "@nijat | Author",
+    `@${author} | Author`,
     `@${assignee.username} | Approver`,
     ...reviewers.map(r => `@${r} | Reviewer`), "",
     "Reviewers can accept the MR using `/lgtm` command. Approver can merge the MR using `/approve`."
   ]
 
-  // TODO Update weight maps one reviewers are assigned
+  // TODO Update weight maps once reviewers are assigned
+  gitlabApi.MergeRequests.show(evt.project_id, evt.merge_request.iid).then(mr => {
+    const changes_count = parseInt((<MergeRequest>mr).changes_count);
+    reviewers.forEach(r => gReviewers.increaseWeight({name:r, weight: changes_count}))
+  })
 
   reply(evt.project_id, evt.merge_request.iid, messageForReviewers.join('\n'))
 }
