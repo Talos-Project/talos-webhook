@@ -1,19 +1,21 @@
-import { GitProvider } from "./GitProvider";
+import { GitProvider, RepositoryFiles } from "./GitProvider";
 import { ProjectId } from "./Project";
 import { RepoBlob } from "./RepoBlob";
 import * as YAML from "yaml";
 
+export type OwnerType = 'approvers' | 'reviewers'
 abstract class Owners {
 
     private projectId: ProjectId;
-    private gitProvider: GitProvider;
+    // private gitProvider: GitProvider;
+    private files: RepositoryFiles;
     private type: string;
     private ownersFilePath = 'OWNERS';
     private owners = {};
 
-    constructor(type, provider: GitProvider, projectId: ProjectId, path?: string) {
+    constructor(type: OwnerType, files: RepositoryFiles, projectId: ProjectId, path?: string) {
         this.type = type
-        this.gitProvider = provider
+        this.files = files
         this.projectId = projectId
         if (typeof path === 'string') {
             this.ownersFilePath = path
@@ -21,13 +23,12 @@ abstract class Owners {
     }
 
     private async fetch() {
-        const blob = await this.gitProvider.RepositoryFiles
-            .show(this.projectId, this.ownersFilePath, 'master')
+        const blob = await this.files.show(this.projectId, this.ownersFilePath, 'master')
         this.owners = YAML.parse(Buffer.from((<RepoBlob>blob).content, "base64")
             .toString("ascii"))
     }
 
-    public async get() {
+    public async get(): Promise<string[]> {
         if (Object.keys(this.owners).length === 0) {
             await this.fetch()
         }
@@ -37,13 +38,13 @@ abstract class Owners {
 }
 
 export class Approvers extends Owners {
-    constructor(provider, projectId: ProjectId, path?: string) {
-        super("approvers", provider, projectId, path)
+    constructor(files: RepositoryFiles, projectId: ProjectId, path?: string) {
+        super("approvers", files, projectId, path)
     }
 }
 
 export class Reviewers extends Owners {
-    constructor(provider, projectId: ProjectId, path?: string) {
-        super("reviewers", provider, projectId, path)
+    constructor(files: RepositoryFiles, projectId: ProjectId, path?: string) {
+        super("reviewers", files, projectId, path)
     }
 }

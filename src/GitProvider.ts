@@ -2,14 +2,17 @@ import { RepoBlob } from "./RepoBlob";
 import { ProjectId } from "./Project";
 import { User } from "./User";
 import { MergeRequestId } from "./MergeRequest"
+
 export type Content = string
 export type SnippetId = number | string
 export type SnippetVisibility = 'private' | 'public' | 'internal';
+export type UserId = number | string
 
 export interface GitProvider {
     MergeRequests: MergeRequests;
     RepositoryFiles: RepositoryFiles
     Snippets: Snippets
+    Users: Users
 }
 
 export interface MergeRequests {
@@ -32,4 +35,10 @@ export interface Snippets {
     create(title: string, filename: string, content: string, visibility: SnippetVisibility, options?: object): Promise<object>
     content(snippetId: SnippetId): Promise<Content> | any
     edit(snippetId: SnippetId, options?: object): Promise<Snippet> | any
+}
+
+export interface Users {
+    all(): Promise<User[]> | any
+    current(): Promise<User> | any
+    show(userId: UserId): Promise<User> | any
 }
