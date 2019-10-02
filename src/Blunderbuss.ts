@@ -21,7 +21,7 @@ export class Blunderbuss {
         const users = await this.users.all()
         const eliminatedCandidate = users.find(u => u.id === this.mrEvt.author_id)
         const candidates = (await this.approversCandidates.get()).filter(c => c !== eliminatedCandidate.username)
-        return candidates[Math.floor(Math.random() * candidates.length)]
+        return users.find(u => u.username === candidates[Math.floor(Math.random() * candidates.length)])
     }
 
     async selectReviewers() {
@@ -29,6 +29,6 @@ export class Blunderbuss {
         return (await this.users.all())
             .filter(u => u.id !== this.mrEvt.author_id)
             .filter(u => candidates.includes(u.username))
-            .sort((a, b) => a.weight - b.weight).map(r => r.name).slice(0, 2)
+            .sort((a, b) => a.weight - b.weight).slice(0, 2)
     }
 }
