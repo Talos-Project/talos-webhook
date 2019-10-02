@@ -17,6 +17,10 @@ export class Blunderbuss {
         this.reviewersCandidates = new Reviewers(files, projectId)
     }
 
+    async getAuthor() {
+        return (await this.users.all()).find(u => u.id === this.mrEvt.author_id)
+    }
+
     async selectApprover() {
         const users = await this.users.all()
         const eliminatedCandidate = users.find(u => u.id === this.mrEvt.author_id)
