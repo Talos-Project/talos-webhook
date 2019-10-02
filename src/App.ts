@@ -8,6 +8,7 @@ import { MergeRequest } from './MergeRequest';
 import { GitlabReviewers } from './GitlabReviewers';
 import { botInfo, gitlabApi, ownersFileName } from './Entrypoint';
 import * as YAML from 'yaml'
+import { MergeRequestReveiwers } from './MergeRequestReviewers';
 
 export async function handleNoteEvent(noteEvt: NoteEvent) {
   const { note } = noteEvt.object_attributes;
@@ -16,6 +17,7 @@ export async function handleNoteEvent(noteEvt: NoteEvent) {
     return;
   }
   if (note.includes('/test')) {
+    // TODO Handle WIP request
     const { approvers, reviewers } = await getCollaborators(noteEvt.project_id);
     if (!(approvers.includes(noteEvt.user.username) || reviewers.includes(noteEvt.user.username)))
       return;
@@ -23,6 +25,8 @@ export async function handleNoteEvent(noteEvt: NoteEvent) {
     reply(noteEvt.project_id, noteEvt.merge_request.iid, `@${noteEvt.user.username}, your requst for tests has been submitted! I will post test results once they are ready.`);
   }
   if (note.includes('/lgtm')) {
+    // TODO Handle WIP request
+    // FIXME Get reviewers from MR
     const { approvers, reviewers } = await getCollaborators(noteEvt.project_id);
     if (!(approvers.includes(noteEvt.user.username) || reviewers.includes(noteEvt.user.username)))
       return;
@@ -76,6 +80,8 @@ async function handleReadyForReviewEvent(evt: NoteEvent) {
     ...reviewers.map(r => `@${r} | Reviewer`), "",
     "Reviewers can accept the MR using `/lgtm` command. Approver can merge the MR using `/approve`."
   ];
+  const mrRevs = new MergeRequestReveiwers(gitlabApi, evt.project_id, evt.merge_request.iid)
+  mrRevs.set(reviewers)
   // TODO Update weight maps once reviewers are assigned
   gitlabApi.MergeRequests.show(evt.project_id, evt.merge_request.iid).then(mr => {
     const changes_count = parseInt((<MergeRequest>mr).changes_count);
