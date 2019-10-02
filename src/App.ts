@@ -54,7 +54,7 @@ export async function handleNoteEvent(noteEvt: NoteEvent) {
 async function handleReadyForReviewEvent(evt: NoteEvent) {
   // TODO Move Blunderbuss selection to a function
   // and invoke that function if only assignee is not assigned
-  const gReviewers = new GitlabReviewers(gitlabApi);
+  const gReviewers = new GitlabReviewers(gitlabApi.Snippets);
   const owners = await getCollaborators(evt.project_id);
   const users = await gitlabApi.Users.all().then(_ => (<User[]>_));
   const author = users.find(u => evt.merge_request.author_id === u.id).username;
@@ -80,7 +80,7 @@ async function handleReadyForReviewEvent(evt: NoteEvent) {
     ...reviewers.map(r => `@${r} | Reviewer`), "",
     "Reviewers can accept the MR using `/lgtm` command. Approver can merge the MR using `/approve`."
   ];
-  const mrRevs = new MergeRequestReveiwers(gitlabApi, evt.project_id, evt.merge_request.iid)
+  const mrRevs = new MergeRequestReveiwers(gitlabApi.Snippets, evt.project_id, evt.merge_request.iid)
   mrRevs.set(reviewers)
   // TODO Update weight maps once reviewers are assigned
   gitlabApi.MergeRequests.show(evt.project_id, evt.merge_request.iid).then(mr => {

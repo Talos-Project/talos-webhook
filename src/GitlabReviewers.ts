@@ -1,6 +1,7 @@
 import * as YAML from 'yaml';
 import { Storage } from './Storage';
 import { GitlabStorage } from './GitlabStorage';
+import { Snippets } from './GitProvider';
 
 export type Name = string
 export type Weight = number
@@ -14,14 +15,13 @@ interface WeightMap {
 export class GitlabReviewers {
 
   private reviewers: Map<Name, Weight>;
-  private path: string = "Reviewers.WeightMaps";
   private storage: Storage<Promise<string>, string>;
 
-  constructor(provider, path?: string) {
-    if (typeof path === 'string') {
-      this.path = path
+  constructor(snippets: Snippets, path?: string) {
+    if (typeof path !== 'string') {
+      path = "Reviewers.WeightMaps"
     }
-    this.storage = new GitlabStorage(provider,this.path);
+    this.storage = new GitlabStorage(snippets, path);
     this.reviewers = new Map<Name, Weight>();
   }
 

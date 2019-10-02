@@ -1,21 +1,20 @@
-import { GitlabProvider } from "./GitlabProvider";
 import { Storage } from "./Storage"
 import { GitlabStorage } from "./GitlabStorage";
 import { ProjectId } from "./Project";
 import { MergeRequestId } from "./MergeRequest";
 import * as YAML from "yaml"
+import { Snippets } from "./GitProvider";
 
 export class MergeRequestReveiwers {
 
-    private provider: GitlabProvider
-    private storage: Storage<Promise<string>,string>
+    private storage: Storage<Promise<string>, string>
     private reviewers: string[]
 
-    constructor(provider: GitlabProvider, projectId: ProjectId, mrId: MergeRequestId, basePath?: string) {
+    constructor(snippets: Snippets, projectId: ProjectId, mrId: MergeRequestId, basePath?: string) {
         if (typeof basePath !== 'string')
             basePath = ""
-        this.provider = provider
-        this.storage = new GitlabStorage(provider, `${basePath}/${projectId}/${mrId}`)
+        // FIXME Delegate storage decision to user class 
+        this.storage = new GitlabStorage(snippets, `${basePath}/${projectId}/${mrId}`)
     }
 
     async get() {
@@ -27,6 +26,6 @@ export class MergeRequestReveiwers {
 
     async set(reviewers: string[]) {
         this.reviewers = reviewers
-        await this.storage.write(YAML.stringify({reviewers: this.reviewers }))
+        await this.storage.write(YAML.stringify({ reviewers: this.reviewers }))
     }
 }
