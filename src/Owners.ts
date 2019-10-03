@@ -1,4 +1,4 @@
-import { GitProvider, RepositoryFiles } from "./GitProvider";
+import { RepositoryFiles } from "./GitProvider";
 import { ProjectId } from "./Project";
 import { RepoBlob } from "./RepoBlob";
 import * as YAML from "yaml";
@@ -7,7 +7,6 @@ export type OwnerType = 'approvers' | 'reviewers'
 abstract class Owners {
 
     private projectId: ProjectId;
-    // private gitProvider: GitProvider;
     private files: RepositoryFiles;
     private type: string;
     private ownersFilePath = 'OWNERS';
