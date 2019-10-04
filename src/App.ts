@@ -7,7 +7,7 @@ import { Collaborators } from './Collaborators';
 import { MergeRequest } from './MergeRequest';
 import { botInfo, gitlabApi, ownersFileName } from './Entrypoint';
 import * as YAML from 'yaml'
-import { MergeRequestReveiwers } from './MergeRequestReviewers';
+import { MergeRequestParticipants } from './MergeRequestParticipants';
 import { GitlabUsersDecorator } from './GitlabUsersDecorator';
 import { Blunderbuss } from './Blunderbuss';
 
@@ -23,17 +23,72 @@ export async function handleNoteEvent(noteEvt: NoteEvent) {
     if (!(approvers.includes(noteEvt.user.username) || reviewers.includes(noteEvt.user.username)))
       return;
     handleTestEvent(noteEvt.merge_request, noteEvt.project_id);
-    reply(noteEvt.project_id, noteEvt.merge_request.iid, `@${noteEvt.user.username}, your requst for tests has been submitted! I will post test results once they are ready.`);
+    reply(noteEvt.project_id,
+      noteEvt.merge_request.iid,
+      `@${noteEvt.user.username}, 
+      your requst for tests has been submitted! 
+      I will post test results once they are ready.`);
   }
+
   if (note.includes('/lgtm')) {
     // TODO Handle WIP request
-    // FIXME Get reviewers from MR
-    const { approvers, reviewers } = await getCollaborators(noteEvt.project_id);
-    if (!(approvers.includes(noteEvt.user.username) || reviewers.includes(noteEvt.user.username)))
+    const participants = new MergeRequestParticipants(
+      gitlabApi.Snippets,
+      noteEvt.project_id,
+      noteEvt.merge_request.iid)
+
+    const { reviewers, lgtmers } = await participants.get()
+
+    if (!reviewers.includes(noteEvt.user.username))
       return;
-    const labels = await gitlabApi.MergeRequests.show(noteEvt.project_id, noteEvt.merge_request.iid).then(mr => (<MergeRequest>mr).labels);
-    gitlabApi.MergeRequests.edit(noteEvt.project_id, noteEvt.merge_request.iid, { labels: labels.join(",").concat(",lgtm") });
+
+    const labels = await gitlabApi.MergeRequests
+      .show(noteEvt.project_id, noteEvt.merge_request.iid)
+      .then(mr => (<MergeRequest>mr).labels);
+    gitlabApi.MergeRequests
+      .edit(noteEvt.project_id, noteEvt.merge_request.iid,
+        { labels: labels.concat("lgtm").join(",") });
+
+
+    if (lgtmers.includes(noteEvt.user.username))
+      return
+
+    lgtmers.push(noteEvt.user.username)
+    participants.set({ lgtmers })
   }
+
+  if (note.includes('/unlgtm')) {
+    const participants = new MergeRequestParticipants(
+      gitlabApi.Snippets,
+      noteEvt.project_id,
+      noteEvt.merge_request.iid)
+
+    let { lgtmers } = await participants.get()
+
+    if (!lgtmers.includes(noteEvt.user.username))
+      return
+
+    const lgtmerIndex = lgtmers.indexOf(noteEvt.user.username)
+    lgtmers.splice(lgtmerIndex, 1)
+
+    participants.set({ lgtmers: lgtmers })
+
+    if (lgtmers.length !== 0)
+      return
+
+    let labels = await gitlabApi.MergeRequests
+      .show(noteEvt.project_id, noteEvt.merge_request.iid)
+      .then(mr => (<MergeRequest>mr).labels);
+
+    const labelIndex = lgtmers.indexOf("lgtm")
+    labels.splice(labelIndex, 1)
+
+    gitlabApi.MergeRequests
+      .edit(noteEvt.project_id, noteEvt.merge_request.iid,
+        { labels: labels.join(",") });
+
+  }
+
   if (note.includes('/approve')) {
     const users = await gitlabApi.Users.all().then(_ => (<User[]>_));
     const userId = users.find(u => u.username === noteEvt.user.username).id;
@@ -45,7 +100,8 @@ export async function handleNoteEvent(noteEvt: NoteEvent) {
         .catch(e => console.log(e));
   }
   if (note.includes('/ready-for-review')) {
-    handleReadyForReviewEvent(noteEvt);
+    if (noteEvt.object_attributes.author_id === noteEvt.merge_request.author_id)
+      handleReadyForReviewEvent(noteEvt);
   }
   if (note.includes('/meow')) {
     // Use https://api.thecatapi.com/v1/images/search?format=json&results_per_page=1 for better caturday api
@@ -75,8 +131,8 @@ async function handleReadyForReviewEvent(evt: NoteEvent) {
   );
 
   // Keep reviewer collection in persistent storage
-  const mrRevs = new MergeRequestReveiwers(gitlabApi.Snippets, evt.project_id, evt.merge_request.iid)
-  mrRevs.set(reviewers.map(u => u.username))
+  const mrRevs = new MergeRequestParticipants(gitlabApi.Snippets, evt.project_id, evt.merge_request.iid)
+  mrRevs.set({ reviewers: reviewers.map(u => u.username) })
 
   // Update weight maps once reviewers are assigned
   gitlabApi.MergeRequests.show(evt.project_id, evt.merge_request.iid).then(mr => {
@@ -129,8 +185,8 @@ export function handleMergeRequestEvent(mrEvt: MergeRequestEvent) {
     gitlabApi.MergeRequests.show(mrEvt.project.id, mrEvt.object_attributes.iid).then(async mr => {
       const users = new GitlabUsersDecorator(gitlabApi.Users, gitlabApi.Snippets);
       const changes_count = parseInt((<MergeRequest>mr).changes_count);
-      const reviewers = await new MergeRequestReveiwers(gitlabApi.Snippets, mrEvt.project.id, mrEvt.object_attributes.iid).get()
-      reviewers.forEach(r => users.decreaseWeight({ name: r, weight: changes_count }));
+      const participants = await new MergeRequestParticipants(gitlabApi.Snippets, mrEvt.project.id, mrEvt.object_attributes.iid).get()
+      participants["reviewers"].forEach(r => users.decreaseWeight({ name: r, weight: changes_count }));
     }).catch(err => console.log(err));
     // TODO dispose reviewers persistent state 
   }
