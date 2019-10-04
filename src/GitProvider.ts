@@ -17,6 +17,7 @@ export interface GitProvider {
 
 export interface MergeRequests {
     edit(project_id: ProjectId, mrId: MergeRequestId, options?: object): Promise<object>
+    show(project_id: ProjectId, mrId: MergeRequestId, options?: object): Promise<object>
 }
 
 export interface Snippet {
