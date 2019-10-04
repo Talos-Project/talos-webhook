@@ -70,8 +70,8 @@ async function handleReadyForReviewEvent(evt: NoteEvent) {
 
   // Resolve WIP statas and Assign the merge request approver 
   gitlabApi.MergeRequests.edit(
-      evt.project_id, evt.merge_request.iid, 
-      { title: evt.merge_request.title.replace('WIP: ', ''), assignee_id: assignee.id }
+    evt.project_id, evt.merge_request.iid,
+    { title: evt.merge_request.title.replace('WIP: ', ''), assignee_id: assignee.id }
   );
 
   // Keep reviewer collection in persistent storage
@@ -81,7 +81,7 @@ async function handleReadyForReviewEvent(evt: NoteEvent) {
   // Update weight maps once reviewers are assigned
   gitlabApi.MergeRequests.show(evt.project_id, evt.merge_request.iid).then(mr => {
     const changes_count = parseInt((<MergeRequest>mr).changes_count);
-    reviewers.forEach(r => users.increaseWeight({ name: r.username, weight: Math.log10(changes_count) }));
+    reviewers.forEach(r => users.increaseWeight({ name: r.username, weight: changes_count }));
   });
 
   // Comment to thread with Merge Request participants table
@@ -121,22 +121,35 @@ Code Coverage | :no_entry: | Link
   `;
 }
 
-export function handleWelcomeEvent(mr: MergeRequestEvent) {
-  if (mr.object_attributes.action === "open")
-    reply(mr.project.id, mr.object_attributes.iid, generateWelcomeMessage(mr.user));
+export function handleMergeRequestEvent(mrEvt: MergeRequestEvent) {
+  if (mrEvt.object_attributes.action === "open")
+    reply(mrEvt.project.id, mrEvt.object_attributes.iid, generateWelcomeMessage(mrEvt.user));
+  if (mrEvt.object_attributes.action === "merge" || mrEvt.object_attributes.action === "close") {
+    // Update weight maps once reviewers are assigned
+    gitlabApi.MergeRequests.show(mrEvt.project.id, mrEvt.object_attributes.iid).then(async mr => {
+      const users = new GitlabUsersDecorator(gitlabApi.Users, gitlabApi.Snippets);
+      const changes_count = parseInt((<MergeRequest>mr).changes_count);
+      const reviewers = await new MergeRequestReveiwers(gitlabApi.Snippets, mrEvt.project.id, mrEvt.object_attributes.iid).get()
+      reviewers.forEach(r => users.decreaseWeight({ name: r, weight: changes_count }));
+    }).catch(err => console.log(err));
+    // TODO dispose reviewers persistent state 
+  }
 }
+
 function generateWelcomeMessage(user: User) {
   return `
     Hi @${user.username}! Thanks for your MR.
     Once your changes are ready to be merged type \`/ready-for-review\` so that I can assign reviewers.
   `;
 }
+
 function getCollaborators(project_id: number | string): Promise<Collaborators> {
   return gitlabApi.RepositoryFiles.show(project_id, ownersFileName, 'master')
     .then(_ => {
       return YAML.parse(Buffer.from((<RepoBlob>_).content, "base64").toString("ascii"));
     });
 }
+
 function reply(projectId: ProjectId, mrId: any, text: string) {
   gitlabApi.MergeRequestNotes.create(projectId, mrId, text).catch(err => console.log(err));
 }

@@ -2,7 +2,7 @@ import * as express from 'express'
 import * as bodyparser from 'body-parser'
 import { Gitlab } from 'gitlab'
 import { User } from './User';
-import { handleNoteEvent, handlePipelineEvent, handleWelcomeEvent } from './App';
+import { handleNoteEvent, handlePipelineEvent, handleMergeRequestEvent } from './App';
 
 require("dotenv").config();
 
@@ -32,7 +32,7 @@ api.post("/hook", (req, res) => {
       handlePipelineEvent(req.body);
       break;
     case "merge_request":
-      handleWelcomeEvent(req.body);
+      handleMergeRequestEvent(req.body);
       break;
     default:
       console.log("Unhandled request")
