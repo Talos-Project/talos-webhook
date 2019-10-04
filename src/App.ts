@@ -9,6 +9,8 @@ import { GitlabReviewers } from './GitlabReviewers';
 import { botInfo, gitlabApi, ownersFileName } from './Entrypoint';
 import * as YAML from 'yaml'
 import { MergeRequestReveiwers } from './MergeRequestReviewers';
+import { GitlabUsersDecorator } from './GitlabUsersDecorator';
+import { Blunderbuss } from './Blunderbuss';
 
 export async function handleNoteEvent(noteEvt: NoteEvent) {
   const { note } = noteEvt.object_attributes;
@@ -52,40 +54,29 @@ export async function handleNoteEvent(noteEvt: NoteEvent) {
   }
 }
 async function handleReadyForReviewEvent(evt: NoteEvent) {
-  // TODO Move Blunderbuss selection to a function
-  // and invoke that function if only assignee is not assigned
-  const gReviewers = new GitlabReviewers(gitlabApi.Snippets);
-  const owners = await getCollaborators(evt.project_id);
-  const users = await gitlabApi.Users.all().then(_ => (<User[]>_));
-  const author = users.find(u => evt.merge_request.author_id === u.id).username;
-  const potentialApprovers = users.filter(u => owners.approvers.includes(u.username))
-    .filter(u => u.id !== evt.merge_request.author_id).map(r => r.username);
-  const assignee = users.find(u => u.username === potentialApprovers[Math.floor(Math.random() * potentialApprovers.length)]);
-  const potentialReviewers = users.filter(u => owners.reviewers.includes(u.username))
-    .filter(u => u.id !== evt.merge_request.author_id).map(r => r.username);
-  const ReviewersWeigthMaps = await gReviewers.getAll();
-  const zeroWeightRevs = potentialReviewers
-    .filter(r => !ReviewersWeigthMaps.map(wm => wm.name).includes(r));
-  // Updating current state of reviewers weightmap with new users from owners file
-  zeroWeightRevs.forEach(r => gReviewers.update({ name: r, weight: 0 }));
-  const reviewers = (await gReviewers.getAll())
-    .filter(wm => potentialReviewers.includes(wm.name))
-    .sort((a, b) => a.weight - b.weight).map(r => r.name).slice(0, 2);
-  gitlabApi.MergeRequests.edit(evt.project_id, evt.merge_request.iid, { assignee_id: assignee.id });
+  const users = new GitlabUsersDecorator(gitlabApi.Users, gitlabApi.Snippets);
+  const blunderbuss = new Blunderbuss(users, evt.project_id, evt.merge_request, gitlabApi.RepositoryFiles)
+  const author = await blunderbuss.getAuthor()
+  const assignee = await blunderbuss.selectApprover()
+  const reviewers = await blunderbuss.selectReviewers()
+  reviewers.forEach(u => users.increaseWeight({ name: u.username, weight: u.weight+1 }))
+
   const messageForReviewers = [
     "The following table represents the participants of this MR",
     "", "Name | Role", "---|---",
-    `@${author} | Author`,
+    `@${author.username} | Author`,
     `@${assignee.username} | Approver`,
-    ...reviewers.map(r => `@${r} | Reviewer`), "",
+    ...reviewers.map(r => `@${r.username} | Reviewer`), "",
     "Reviewers can accept the MR using `/lgtm` command. Approver can merge the MR using `/approve`."
   ];
+
+  gitlabApi.MergeRequests.edit(evt.project_id, evt.merge_request.iid, { assignee_id: assignee.id });
   const mrRevs = new MergeRequestReveiwers(gitlabApi.Snippets, evt.project_id, evt.merge_request.iid)
-  mrRevs.set(reviewers)
-  // TODO Update weight maps once reviewers are assigned
+  mrRevs.set(reviewers.map(u => u.username))
+  // Update weight maps once reviewers are assigned
   gitlabApi.MergeRequests.show(evt.project_id, evt.merge_request.iid).then(mr => {
     const changes_count = parseInt((<MergeRequest>mr).changes_count);
-    reviewers.forEach(r => gReviewers.increaseWeight({ name: r, weight: changes_count }));
+    reviewers.forEach(r => users.increaseWeight({ name: r.username, weight: changes_count }));
   });
   reply(evt.project_id, evt.merge_request.iid, messageForReviewers.join('\n'));
 }
