@@ -5,4 +5,6 @@ export interface MergeRequestEventAttributes {
     target_branch: string;
     assignee_id: number | string;
     author_id: number | string;
+    work_in_progress: boolean | string;
+    title: string;
 }

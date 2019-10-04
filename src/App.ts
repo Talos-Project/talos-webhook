@@ -5,7 +5,6 @@ import { NoteEvent } from './NoteEvent';
 import { RepoBlob } from './RepoBlob';
 import { Collaborators } from './Collaborators';
 import { MergeRequest } from './MergeRequest';
-import { GitlabReviewers } from './GitlabReviewers';
 import { botInfo, gitlabApi, ownersFileName } from './Entrypoint';
 import * as YAML from 'yaml'
 import { MergeRequestReveiwers } from './MergeRequestReviewers';
@@ -59,7 +58,6 @@ async function handleReadyForReviewEvent(evt: NoteEvent) {
   const author = await blunderbuss.getAuthor()
   const assignee = await blunderbuss.selectApprover()
   const reviewers = await blunderbuss.selectReviewers()
-  reviewers.forEach(u => users.increaseWeight({ name: u.username, weight: u.weight+1 }))
 
   const messageForReviewers = [
     "The following table represents the participants of this MR",
@@ -70,16 +68,26 @@ async function handleReadyForReviewEvent(evt: NoteEvent) {
     "Reviewers can accept the MR using `/lgtm` command. Approver can merge the MR using `/approve`."
   ];
 
-  gitlabApi.MergeRequests.edit(evt.project_id, evt.merge_request.iid, { assignee_id: assignee.id });
+  // Resolve WIP statas and Assign the merge request approver 
+  gitlabApi.MergeRequests.edit(
+      evt.project_id, evt.merge_request.iid, 
+      { title: evt.merge_request.title.replace('WIP: ', ''), assignee_id: assignee.id }
+  );
+
+  // Keep reviewer collection in persistent storage
   const mrRevs = new MergeRequestReveiwers(gitlabApi.Snippets, evt.project_id, evt.merge_request.iid)
   mrRevs.set(reviewers.map(u => u.username))
+
   // Update weight maps once reviewers are assigned
   gitlabApi.MergeRequests.show(evt.project_id, evt.merge_request.iid).then(mr => {
     const changes_count = parseInt((<MergeRequest>mr).changes_count);
-    reviewers.forEach(r => users.increaseWeight({ name: r.username, weight: changes_count }));
+    reviewers.forEach(r => users.increaseWeight({ name: r.username, weight: Math.log10(changes_count) }));
   });
+
+  // Comment to thread with Merge Request participants table
   reply(evt.project_id, evt.merge_request.iid, messageForReviewers.join('\n'));
 }
+
 function handleTestEvent(merge_request: any, project_id: ProjectId) {
   const variables = [
     { "key": "MR_ID", "value": merge_request.iid.toString() },
