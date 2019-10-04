@@ -1,4 +1,4 @@
-import { GitProvider, RepositoryFiles } from "./GitProvider";
+import { RepositoryFiles } from "./GitProvider";
 import { ProjectId } from "./Project";
 import { Approvers, Reviewers } from "./Owners";
 import { GitlabUsersDecorator } from "./GitlabUsersDecorator";
