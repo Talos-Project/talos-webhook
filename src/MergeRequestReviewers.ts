@@ -11,6 +11,7 @@ export class MergeRequestReveiwers {
     private reviewers: string[]
 
     constructor(snippets: Snippets, projectId: ProjectId, mrId: MergeRequestId, basePath?: string) {
+        this.reviewers = []
         if (typeof basePath !== 'string')
             basePath = ""
         // FIXME Delegate storage decision to user class 
@@ -19,7 +20,7 @@ export class MergeRequestReveiwers {
 
     async get() {
         if (this.reviewers.length === 0) {
-            this.reviewers = YAML.parse(await this.storage.read())
+            this.reviewers = YAML.parse(await this.storage.read())['reviewers']
         }
         return this.reviewers
     }

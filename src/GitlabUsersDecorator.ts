@@ -54,7 +54,6 @@ export class GitlabUsersDecorator implements Users {
         const u = this.users.find(u => u.username === wm.name)
         wm.weight = isNaN(wm.weight) ? 0 : wm.weight + (isNaN(u.weight) ? 0 : u.weight)
         this.update(wm)
-        this.write()
     }
 
     async decreaseWeight(wm: WeightMap) {
@@ -62,7 +61,6 @@ export class GitlabUsersDecorator implements Users {
         const u = this.users.find(u => u.username === wm.name)
         wm.weight = isNaN(wm.weight) ? 0 : wm.weight - (isNaN(u.weight) ? 0 : u.weight)
         this.update(wm)
-        this.write()
     }
 
     private async readWM() {
