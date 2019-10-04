@@ -120,13 +120,7 @@ Unit Tests | :warning: | N/A
 Code Coverage | :no_entry: | Link 
   `;
 }
-// TODO: Extract requestReport to an interface so that you can have diffirent types of reports (code quality, coverage, etc.) 
-// TODO: Get all artifacts from jobs with stage test 
-// TODO: Unzip json reports from artifacts and append them to merge request discussion 
-// TODO: Attach commit hash to artifacts 
-// TODO: Let users choose the type (code quality) and format (html,json) of report 
-// TODO: Expose report name as function argument 
-// TODO: Extract artifact path from pipeline variable 
+
 export function handleWelcomeEvent(mr: MergeRequestEvent) {
   if (mr.object_attributes.action === "open")
     reply(mr.project.id, mr.object_attributes.iid, generateWelcomeMessage(mr.user));
