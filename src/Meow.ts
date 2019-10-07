@@ -11,7 +11,7 @@ export class Meow implements Plugin<any, Promise<any>> {
     }
 
     handle(rx: NoteEvent): Promise<Promise<any>> {
-        if (rx.object_attributes.note.includes("/meow"))
+        if (rx.object_attributes.note && rx.object_attributes.note.includes("/meow"))
         return this.client.MergeRequestNotes
             .create(rx.project_id, rx.merge_request.iid, "![cat](https://cataas.com/cat)");
     }
