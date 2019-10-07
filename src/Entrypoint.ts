@@ -5,12 +5,14 @@ import { User } from './User';
 import { handleNoteEvent, handlePipelineEvent, handleMergeRequestEvent } from './App';
 
 require("dotenv").config();
-
 export const ownersFileName = 'OWNERS';
-export const gitlabApi = new Gitlab({
+
+const gitConfig = {
   host: process.env.host,
   token: process.env.token
-});
+};
+
+export const gitlabApi = new Gitlab(gitConfig);
 
 export let botInfo: User;
 
