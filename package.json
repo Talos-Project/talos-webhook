@@ -2,10 +2,8 @@
   "name": "gitlab-prow",
   "version": "1.0.0",
   "description": "",
-  "bin": {
-    "gitlab-prow": "./build/app.js"
-  },
   "scripts": {
+    "start": "node build/Entrypoint.js",
     "build": "tsc",
     "test": "mocha --ui tdd --require ts-node/register tests/**/*.ts",
     "prettier:base": "prettier --parser typescript",
