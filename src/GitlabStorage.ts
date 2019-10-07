@@ -18,9 +18,9 @@ export class GitlabStorage implements Storage<Promise<string>,string> {
     async write(content: string) {
         const id = await this.resolveId()
         if (id !== null)
-            this.snippets.edit(id, { content })
+            return this.snippets.edit(id, { content })
         else 
-            this.snippets.create(this.path, "", content, "private")
+            return this.snippets.create(this.path, "", content, "private")
     }
 
     private async resolveId(): Promise<SnippetId> {
