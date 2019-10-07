@@ -15,6 +15,6 @@ export class GitlabAPIDecorator implements GitProvider {
     constructor(config?) {
         this.provider = new Gitlab(config)
         this.Users = new GitlabUsersDecorator(this.provider.Users,this.provider.Snippets)
-        this.MergeRequests = new MergeRequestDecorator(this.provider.MergeRequests, this.provider.Snippets)
+        this.MergeRequests = new MergeRequestDecorator(this.provider.MergeRequests, this.provider.Snippets, this.Users)
     }
 }
