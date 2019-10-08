@@ -2,6 +2,7 @@ import { RepoBlob } from "./RepoBlob";
 import { ProjectId } from "./Project";
 import { User } from "./User";
 import { MergeRequestId } from "./MergeRequest"
+import { Snippet } from "./Snippet";
 
 export type Content = string
 export type SnippetId = number | string
@@ -11,7 +12,9 @@ export type UserId = number | string
 export interface GitClient {
     MergeRequests: MergeRequests
     MergeRequestNotes: MergeRequestNotes
+    Pipelines: Pipelines
     RepositoryFiles: RepositoryFiles
+    RepositoryOwners: RepositoryOwners
     Snippets: Snippets
     Users: Users
 }
@@ -25,11 +28,12 @@ export interface MergeRequestNotes {
     create(project_id: ProjectId, mrId: MergeRequestId, body: string, options?: object): Promise<object>
 }
 
-export interface Snippet {
-    id: SnippetId
-    title: string
-    file_name: string
-    author: User
+export interface Pipelines {
+    create(project_id: ProjectId, mrId: MergeRequestId, options?: object): Promise<object>
+}
+
+export interface RepositoryOwners {
+    show(project_id: ProjectId, options?: object): Promise<object>
 }
 
 export interface RepositoryFiles {

@@ -6,10 +6,9 @@ import { GitlabClient } from './gitlab/GitlabClient';
 import { PluginFactory } from './PluginFactory';
 import { GenericEvent } from './interfaces/GenericEvent';
 
-const plugins = ["meow", "lgtm", "welcome"]
+const plugins = ["meow", "lgtm", "welcome","test-runner"]
 
 require("dotenv").config();
-export const ownersFileName = 'OWNERS';
 
 const gitConfig = {
   host: process.env.host,
@@ -18,13 +17,17 @@ const gitConfig = {
 
 const gitExt = new GitlabClient(gitConfig)
 
+gitExt.RepositoryOwners.show(528).then(console.warn)
+
 const factory = new PluginFactory(gitExt)
 const dmuxer = new Demuxer(plugins.map(plugin => factory.make(plugin)))
 
 
 export let botInfo: User;
 
-gitExt.Users.current().then(u => botInfo = <User>u)
+gitExt.Users.current()
+  .then(u => botInfo = <User>u)
+  .catch(console.error)
 
 const PORT = process.env.NODE_PORT || 3000;
 const app = express();

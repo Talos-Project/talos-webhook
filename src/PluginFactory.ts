@@ -3,6 +3,7 @@ import { Plugin } from "./interfaces/Plugin"
 import { Caturday } from "./plugins/Caturday";
 import { LGTM } from "./plugins/LGTM";
 import { Welcome } from "./plugins/Welcome";
+import { TestRunner } from "./plugins/TestRunner"
 
 export class PluginFactory {
 
@@ -20,6 +21,8 @@ export class PluginFactory {
                 return new LGTM(this.client)
             case "welcome":
                  return new Welcome(this.client)
+            case "test-runner":
+                 return new TestRunner(this.client)
             default:
                 return null
         }
