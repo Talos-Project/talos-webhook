@@ -2,6 +2,7 @@ import { GitClient } from "./interfaces/GitClient";
 import { Plugin } from "./interfaces/Plugin"
 import { Caturday } from "./plugins/Caturday";
 import { LGTM } from "./plugins/LGTM";
+import { Welcome } from "./plugins/Welcome";
 
 export class PluginFactory {
 
@@ -17,6 +18,8 @@ export class PluginFactory {
                 return new Caturday(this.client)
             case "lgtm":
                 return new LGTM(this.client)
+            case "welcome":
+                 return new Welcome(this.client)
             default:
                 return null
         }

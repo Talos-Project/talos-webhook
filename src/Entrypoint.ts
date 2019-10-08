@@ -6,7 +6,7 @@ import { GitlabClient } from './gitlab/GitlabClient';
 import { PluginFactory } from './PluginFactory';
 import { GenericEvent } from './interfaces/GenericEvent';
 
-const plugins = ["meow", "lgtm"]
+const plugins = ["meow", "lgtm", "welcome"]
 
 require("dotenv").config();
 export const ownersFileName = 'OWNERS';
