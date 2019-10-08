@@ -11,7 +11,7 @@ export class LGTM implements Plugin<any, Promise<any>> {
         this.client = client
     }
 
-    async handle(rx: NoteEvent): Promise<Promise<any>> {
+    async handle(rx: NoteEvent): Promise<any> {
         if (!rx.object_attributes.note)
             return
 
