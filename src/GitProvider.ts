@@ -9,7 +9,8 @@ export type SnippetVisibility = 'private' | 'public' | 'internal';
 export type UserId = number | string
 
 export interface GitProvider {
-    MergeRequests: MergeRequests;
+    MergeRequests: MergeRequests
+    MergeRequestNotes: MergeRequestNotes
     RepositoryFiles: RepositoryFiles
     Snippets: Snippets
     Users: Users
@@ -18,6 +19,10 @@ export interface GitProvider {
 export interface MergeRequests {
     edit(project_id: ProjectId, mrId: MergeRequestId, options?: object): Promise<object>
     show(project_id: ProjectId, mrId: MergeRequestId, options?: object): Promise<object>
+}
+
+export interface MergeRequestNotes {
+    create(project_id: ProjectId, mrId: MergeRequestId, body: string, options?: object): Promise<object>
 }
 
 export interface Snippet {
