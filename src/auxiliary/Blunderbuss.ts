@@ -1,8 +1,8 @@
-import { RepositoryFiles } from "./GitProvider";
-import { ProjectId } from "./Project";
+import { RepositoryFiles } from "../interfaces/GitClient";
+import { ProjectId } from "../interfaces/Project";
 import { Approvers, Reviewers } from "./Owners";
-import { GitlabUsersDecorator } from "./GitlabUsersDecorator";
-import { MergeRequestEventAttributes } from "./MergeRequestEventAttributes";
+import { GitlabUsersDecorator } from "../gitlab/GitlabUsersDecorator";
+import { MergeRequestEventAttributes } from "../interfaces/MergeRequestEventAttributes";
 
 export class Blunderbuss {
     private mrEvt: MergeRequestEventAttributes;

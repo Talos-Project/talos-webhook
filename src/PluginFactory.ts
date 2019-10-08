@@ -1,13 +1,13 @@
-import { GitProvider } from "./GitProvider";
-import { Plugin } from "./Plugin"
-import { Caturday } from "./Caturday";
-import { LGTM } from "./LGTM";
+import { GitClient } from "./interfaces/GitClient";
+import { Plugin } from "./interfaces/Plugin"
+import { Caturday } from "./plugins/Caturday";
+import { LGTM } from "./plugins/LGTM";
 
 export class PluginFactory {
 
-    private client: GitProvider;
+    private client: GitClient;
 
-    constructor(client: GitProvider) {
+    constructor(client: GitClient) {
         this.client = client
     }
 

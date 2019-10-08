@@ -1,12 +1,12 @@
-import { Plugin } from "./Plugin"
-import { GitProvider } from "./GitProvider";
-import { NoteEvent } from "./NoteEvent";
+import { Plugin } from "../interfaces/Plugin"
+import { GitClient } from "../interfaces/GitClient";
+import { NoteEvent } from "../interfaces/NoteEvent";
 
 export class Caturday implements Plugin<any, Promise<any>> {
 
     private client
 
-    constructor(client: GitProvider) {
+    constructor(client: GitClient) {
         this.client = client
     }
 

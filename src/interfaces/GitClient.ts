@@ -8,7 +8,7 @@ export type SnippetId = number | string
 export type SnippetVisibility = 'private' | 'public' | 'internal';
 export type UserId = number | string
 
-export interface GitProvider {
+export interface GitClient {
     MergeRequests: MergeRequests
     MergeRequestNotes: MergeRequestNotes
     RepositoryFiles: RepositoryFiles

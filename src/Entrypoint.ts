@@ -1,11 +1,10 @@
 import * as express from 'express'
 import * as bodyparser from 'body-parser'
-import { Gitlab } from 'gitlab'
-import { User } from './User';
+import { User } from './interfaces/User';
 import { Demuxer } from './Demuxer';
-import { GitlabAPIDecorator } from './GitlabAPIDecorator';
+import { GitlabClient } from './gitlab/GitlabClient';
 import { PluginFactory } from './PluginFactory';
-import { GenericEvent } from './GenericEvent';
+import { GenericEvent } from './interfaces/GenericEvent';
 
 const plugins = ["meow", "lgtm"]
 
@@ -17,7 +16,7 @@ const gitConfig = {
   token: process.env.token
 };
 
-const gitExt = new GitlabAPIDecorator(gitConfig)
+const gitExt = new GitlabClient(gitConfig)
 
 const factory = new PluginFactory(gitExt)
 const dmuxer = new Demuxer(plugins.map(plugin => factory.make(plugin)))

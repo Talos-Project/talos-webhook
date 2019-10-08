@@ -1,9 +1,9 @@
-import { Storage } from "./Storage"
-import { GitlabStorage } from "./GitlabStorage";
-import { ProjectId } from "./Project";
-import { MergeRequestId } from "./MergeRequest";
+import { Storage } from "../interfaces/Storage"
+import { GitlabStorage } from "../gitlab/GitlabStorage";
+import { ProjectId } from "../interfaces/Project";
+import { MergeRequestId } from "../interfaces/MergeRequest";
 import * as YAML from "yaml"
-import { Snippets } from "./GitProvider";
+import { Snippets } from "../interfaces/GitClient";
 
 export class MergeRequestParticipants {
 

@@ -1,15 +1,15 @@
 import { ProjectId } from 'gitlab';
-import { MergeRequestEvent } from './MergeRequestEvent';
-import { User } from './User';
-import { NoteEvent } from './NoteEvent';
-import { RepoBlob } from './RepoBlob';
+import { MergeRequestEvent } from '../interfaces/MergeRequestEvent';
+import { User } from '../interfaces/User';
+import { NoteEvent } from '../interfaces/NoteEvent';
+import { RepoBlob } from '../interfaces/RepoBlob';
 import { Collaborators } from './Collaborators';
-import { MergeRequest } from './MergeRequest';
-import { botInfo, gitlabApi, ownersFileName } from './Entrypoint';
+import { MergeRequest } from '../interfaces/MergeRequest';
+import { botInfo, gitlabApi, ownersFileName } from '../Entrypoint';
 import * as YAML from 'yaml'
 import { MergeRequestParticipants } from './MergeRequestParticipants';
-import { GitlabUsersDecorator } from './GitlabUsersDecorator';
-import { Blunderbuss } from './Blunderbuss';
+import { GitlabUsersDecorator } from '../gitlab/GitlabUsersDecorator';
+import { Blunderbuss } from '../auxiliary/Blunderbuss';
 
 export async function handleNoteEvent(noteEvt: NoteEvent) {
   const { note } = noteEvt.object_attributes;

@@ -1,4 +1,4 @@
-import { Plugin } from "./Plugin"
+import { Plugin } from "./interfaces/Plugin"
 
 export class Demuxer {
 

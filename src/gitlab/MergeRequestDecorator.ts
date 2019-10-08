@@ -1,10 +1,10 @@
-import { MergeRequests, Snippet, Snippets, Users } from "./GitProvider";
-import { MergeRequestId, MergeRequest } from "./MergeRequest";
-import { ProjectId } from "./Project";
-import { Storage } from "./Storage"
+import { MergeRequests, Snippet, Snippets, Users } from "../interfaces/GitClient";
+import { MergeRequestId, MergeRequest } from "../interfaces/MergeRequest";
+import { ProjectId } from "../interfaces/Project";
+import { Storage } from "../interfaces/Storage"
 import * as YAML from "yaml"
 import { GitlabStorage } from "./GitlabStorage";
-import { User } from "./User";
+import { User } from "../interfaces/User";
 
 export class MergeRequestDecorator implements MergeRequests {
     private mr

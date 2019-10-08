@@ -1,6 +1,6 @@
-import { RepositoryFiles } from "./GitProvider";
-import { ProjectId } from "./Project";
-import { RepoBlob } from "./RepoBlob";
+import { RepositoryFiles } from "../interfaces/GitClient";
+import { ProjectId } from "../interfaces/Project";
+import { RepoBlob } from "../interfaces/RepoBlob";
 import * as YAML from "yaml";
 
 export type OwnerType = 'approvers' | 'reviewers'

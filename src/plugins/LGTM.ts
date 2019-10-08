@@ -1,13 +1,13 @@
-import { Plugin } from "./Plugin"
-import { GitProvider } from "./GitProvider";
-import { NoteEvent } from "./NoteEvent";
-import { MergeRequest } from "./MergeRequest";
+import { Plugin } from "../interfaces/Plugin"
+import { GitClient } from "../interfaces/GitClient";
+import { NoteEvent } from "../interfaces/NoteEvent";
+import { MergeRequest } from "../interfaces/MergeRequest";
 
 export class LGTM implements Plugin<any, Promise<any>> {
 
-    private client: GitProvider;
+    private client: GitClient;
 
-    constructor(client: GitProvider) {
+    constructor(client: GitClient) {
         this.client = client
     }
 
