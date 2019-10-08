@@ -2,7 +2,7 @@ import { Plugin } from "./Plugin"
 import { GitProvider } from "./GitProvider";
 import { NoteEvent } from "./NoteEvent";
 
-export class Meow implements Plugin<any, Promise<any>> {
+export class Caturday implements Plugin<any, Promise<any>> {
 
     private client
 
