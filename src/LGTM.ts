@@ -2,11 +2,10 @@ import { Plugin } from "./Plugin"
 import { GitProvider } from "./GitProvider";
 import { NoteEvent } from "./NoteEvent";
 import { MergeRequest } from "./MergeRequest";
-import { MergeRequestParticipants } from "./MergeRequestParticipants";
 
 export class LGTM implements Plugin<any, Promise<any>> {
 
-    private client
+    private client: GitProvider;
 
     constructor(client: GitProvider) {
         this.client = client
@@ -25,59 +24,41 @@ export class LGTM implements Plugin<any, Promise<any>> {
 
     private async lgtm(rx: NoteEvent) {
         // TODO Handle WIP request
-        const participants = new MergeRequestParticipants(
-            this.client.Snippets,
-            rx.project_id,
-            rx.merge_request.iid)
+        const mr = (<MergeRequest>await this.client.MergeRequests
+            .show(rx.project_id, rx.merge_request.iid));
 
-        const { reviewers, lgtmers } = await participants.get()
+        const { reviewers, lgtmers, labels } = mr
 
-        if (!reviewers.includes(rx.user.username))
+        if (!reviewers.map(u => u.id).includes(rx.object_attributes.author_id))
             return;
 
-        const labels = await this.client.MergeRequests
-            .show(rx.project_id, rx.merge_request.iid)
-            .then(mr => (<MergeRequest>mr).labels);
-        this.client.MergeRequests
+        if (!lgtmers.map(u => u.id).includes(rx.object_attributes.author_id))
+            lgtmers.push(rx.user)
+
+        return this.client.MergeRequests
             .edit(rx.project_id, rx.merge_request.iid,
-                { labels: labels.concat("lgtm").join(",") });
-
-
-        if (lgtmers.includes(rx.user.username))
-            return
-
-        lgtmers.push(rx.user.username)
-        participants.set({ lgtmers })
+                { labels: labels.concat("lgtm").join(","), ext: { lgtmers: lgtmers.map(u => u.username) } });
     }
 
     private async unlgtm(rx: NoteEvent) {
-        const participants = new MergeRequestParticipants(
-            this.client.Snippets,
-            rx.project_id,
-            rx.merge_request.iid)
+        const mr = (<MergeRequest>await this.client.MergeRequests
+            .show(rx.project_id, rx.merge_request.iid));
 
-        let { lgtmers } = await participants.get()
+        let { lgtmers, labels } = mr
 
-        if (!lgtmers.includes(rx.user.username))
+        if (!lgtmers.map(u => u.id).includes(rx.object_attributes.author_id))
             return
 
-        const lgtmerIndex = lgtmers.indexOf(rx.user.username)
+        const lgtmerIndex = lgtmers.map(u => u.id).indexOf(rx.object_attributes.author_id)
         lgtmers.splice(lgtmerIndex, 1)
 
-        participants.set({ lgtmers: lgtmers })
+        if (lgtmers.length === 0) {
+            const labelIndex = lgtmers.map(u => u.username).indexOf("lgtm")
+            labels.splice(labelIndex, 1)
+        }
 
-        if (lgtmers.length !== 0)
-            return
-
-        let labels = await this.client.MergeRequests
-            .show(rx.project_id, rx.merge_request.iid)
-            .then(mr => (<MergeRequest>mr).labels);
-
-        const labelIndex = lgtmers.indexOf("lgtm")
-        labels.splice(labelIndex, 1)
-
-        this.client.MergeRequests
+        return this.client.MergeRequests
             .edit(rx.project_id, rx.merge_request.iid,
-                { labels: labels.join(",") })
+                { labels: labels.join(","), ext: { lgtmers: lgtmers.map(u => u.username) } })
     }
 }
