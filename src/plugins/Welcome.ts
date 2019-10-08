@@ -11,6 +11,10 @@ export class Welcome implements Plugin<any, Promise<any>> {
     }
 
     handle(rx: MergeRequestEvent): Promise<any> {
+
+        if (rx.object_kind !== "merge_request")
+            return
+
         if (!rx.object_attributes.action || rx.object_attributes.action !== "open")
             return
 

@@ -11,4 +11,4 @@ export interface GenericEvent {
 
 // FIXME define all event types
 export type EventType = string
-export type ObjectKind = string
+export type ObjectKind = "note" | "pipeline" | "build" | "merge_request"
