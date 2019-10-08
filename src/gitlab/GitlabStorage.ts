@@ -1,5 +1,6 @@
 import { Storage } from '../interfaces/Storage'
-import { Snippets, SnippetId, Snippet } from '../interfaces/GitClient';
+import { Snippets, SnippetId } from '../interfaces/GitClient';
+import { Snippet } from "../interfaces/Snippet";
 
 export class GitlabStorage implements Storage<Promise<string>,string> {
 

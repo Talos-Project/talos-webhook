@@ -9,7 +9,7 @@ import { botInfo, gitlabApi, ownersFileName } from '../Entrypoint';
 import * as YAML from 'yaml'
 import { MergeRequestParticipants } from './MergeRequestParticipants';
 import { GitlabUsersDecorator } from '../gitlab/GitlabUsersDecorator';
-import { Blunderbuss } from '../auxiliary/Blunderbuss';
+import { Blunderbuss } from './Blunderbuss';
 
 export async function handleNoteEvent(noteEvt: NoteEvent) {
   const { note } = noteEvt.object_attributes;

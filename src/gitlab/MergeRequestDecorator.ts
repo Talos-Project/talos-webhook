@@ -1,4 +1,5 @@
-import { MergeRequests, Snippet, Snippets, Users } from "../interfaces/GitClient";
+import { MergeRequests, Snippets, Users } from "../interfaces/GitClient";
+import { Snippet } from "../interfaces/Snippet";
 import { MergeRequestId, MergeRequest } from "../interfaces/MergeRequest";
 import { ProjectId } from "../interfaces/Project";
 import { Storage } from "../interfaces/Storage"

@@ -1,6 +1,6 @@
 import { RepositoryFiles } from "../interfaces/GitClient";
 import { ProjectId } from "../interfaces/Project";
-import { Approvers, Reviewers } from "./Owners";
+import { Approvers, Reviewers } from "../gitlab/GitlabOwners";
 import { GitlabUsersDecorator } from "../gitlab/GitlabUsersDecorator";
 import { MergeRequestEventAttributes } from "../interfaces/MergeRequestEventAttributes";
 
