@@ -1,5 +1,5 @@
-import { ProjectId } from "./Project";
-import { User } from "./User";
+import { ProjectId } from "../structs/Project";
+import { User } from "../structs/User";
 
 export interface GenericEvent {
     event_type: EventType

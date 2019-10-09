@@ -1,7 +1,7 @@
 import { Users, UserId, Snippets } from "../interfaces/GitClient";
-import { User } from "../interfaces/User";
+import { User } from "../interfaces/structs/User";
 import * as YAML from 'yaml';
-import { Storage } from '../interfaces/Storage';
+import { Storage } from '../interfaces/structs/Storage';
 import { GitlabStorage } from './GitlabStorage';
 
 export type Username = string

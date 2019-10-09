@@ -1,8 +1,8 @@
-import { RepoBlob } from "./RepoBlob";
-import { ProjectId } from "./Project";
-import { User } from "./User";
-import { MergeRequestId } from "./MergeRequest"
-import { Snippet } from "./Snippet";
+import { RepoBlob } from "./structs/RepoBlob";
+import { ProjectId } from "./structs/Project";
+import { User } from "./structs/User";
+import { MergeRequestId } from "./structs/MergeRequest"
+import { Snippet } from "./structs/Snippet";
 
 export type Content = string
 export type SnippetId = number | string

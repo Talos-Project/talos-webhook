@@ -1,7 +1,6 @@
-import { User } from './User';
-import { NoteEventAttributes } from './NoteEventAttributes';
-import { MergeRequestEventAttributes } from './MergeRequestEventAttributes';
+import { User } from '../structs/User';
 import { ObjectKind } from './GenericEvent';
+import { MergeRequestEventAttributes } from './MergeRequestEvent';
 
 export interface NoteEvent {
   object_kind: ObjectKind;
@@ -11,3 +10,7 @@ export interface NoteEvent {
   merge_request: MergeRequestEventAttributes;
 }
 
+export interface NoteEventAttributes {
+    note: string;
+    author_id: number;
+}

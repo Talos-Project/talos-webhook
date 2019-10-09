@@ -1,8 +1,8 @@
 import { GitClient, RepositoryOwners } from "../interfaces/GitClient";
-import { ProjectId } from "../interfaces/Project";
+import { ProjectId } from "../interfaces/structs/Project";
 import * as YAML from "yaml";
-import { RepoBlob } from "../interfaces/RepoBlob";
-import { User } from "../interfaces/User";
+import { RepoBlob } from "../interfaces/structs/RepoBlob";
+import { User } from "../interfaces/structs/User";
 
 export interface Owners {
     approvers: string[]

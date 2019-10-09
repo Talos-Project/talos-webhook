@@ -1,5 +1,5 @@
 import { User } from "./User";
-import { SnippetId } from "./GitClient";
+import { SnippetId } from "../GitClient";
 
 export interface Snippet {
     id: SnippetId;
