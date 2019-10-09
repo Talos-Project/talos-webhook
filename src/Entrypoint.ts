@@ -7,7 +7,7 @@ import { PluginFactory } from './PluginFactory';
 import { GenericEvent } from './interfaces/events/GenericEvent';
 import { ConsoleLogger } from './utils/ConsoleLogger';
 
-const plugins = ["meow", "lgtm", "welcome", "test-runner"]
+const plugins = ["Caturday", "LGTM", "Welcome", "TestRunner"]
 
 require("dotenv").config();
 

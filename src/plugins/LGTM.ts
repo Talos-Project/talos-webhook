@@ -1,7 +1,7 @@
 import { Plugin } from "../interfaces/Plugin"
 import { GitClient } from "../interfaces/GitClient";
-import { NoteEvent } from "../interfaces/NoteEvent";
-import { MergeRequest } from "../interfaces/MergeRequest";
+import { NoteEvent } from "../interfaces/events/NoteEvent";
+import { MergeRequest } from "../interfaces/structs/MergeRequest";
 
 export class LGTM implements Plugin<any, Promise<any>> {
 
@@ -13,52 +13,64 @@ export class LGTM implements Plugin<any, Promise<any>> {
 
     async handle(rx: NoteEvent): Promise<any> {
         if (rx.object_kind !== "note")
-            return
+            return Promise.resolve()
 
         if (rx.object_attributes.note.includes("/lgtm"))
-            this.lgtm(rx)
+            return this.lgtm(rx)
 
         if (rx.object_attributes.note.includes("/unlgtm"))
-            this.unlgtm(rx)
+            return this.unlgtm(rx)
     }
 
     private async lgtm(rx: NoteEvent) {
-        // TODO Handle WIP request
-        const mr = (<MergeRequest>await this.client.MergeRequests
-            .show(rx.project_id, rx.merge_request.iid));
+        try {
+            const mr = <MergeRequest>await this.client.MergeRequests
+                .show(rx.project_id, rx.merge_request.iid)
 
-        const { reviewers, lgtmers, labels } = mr
+            const { reviewers, lgtmers, labels } = mr
 
-        if (!reviewers.map(u => u.id).includes(rx.object_attributes.author_id))
-            return;
+            if (!reviewers.map(u => u.id).includes(rx.object_attributes.author_id))
+                return Promise.resolve();
 
-        if (!lgtmers.map(u => u.id).includes(rx.object_attributes.author_id))
-            lgtmers.push(rx.user)
+            if (!lgtmers.map(u => u.id).includes(rx.object_attributes.author_id))
+                lgtmers.push(rx.user)
 
-        return this.client.MergeRequests
-            .edit(rx.project_id, rx.merge_request.iid,
-                { labels: labels.concat("lgtm").join(","), ext: { lgtmers: lgtmers.map(u => u.username) } });
+            return this.client.MergeRequests
+                .edit(rx.project_id, rx.merge_request.iid,
+                    {
+                        labels: labels.concat("lgtm").join(","),
+                        ext: {
+                            lgtmers: lgtmers.map(u => u.username)
+                        }
+                    });
+        } catch (e) {
+            return Promise.reject(e)
+        }
     }
 
     private async unlgtm(rx: NoteEvent) {
-        const mr = (<MergeRequest>await this.client.MergeRequests
-            .show(rx.project_id, rx.merge_request.iid));
+        try {
+            const mr = (<MergeRequest>await this.client.MergeRequests
+                .show(rx.project_id, rx.merge_request.iid));
 
-        let { lgtmers, labels } = mr
+            let { lgtmers, labels } = mr
 
-        if (!lgtmers.map(u => u.id).includes(rx.object_attributes.author_id))
-            return
+            if (!lgtmers.map(u => u.id).includes(rx.object_attributes.author_id))
+                return
 
-        const lgtmerIndex = lgtmers.map(u => u.id).indexOf(rx.object_attributes.author_id)
-        lgtmers.splice(lgtmerIndex, 1)
+            const lgtmerIndex = lgtmers.map(u => u.id).indexOf(rx.object_attributes.author_id)
+            lgtmers.splice(lgtmerIndex, 1)
 
-        if (lgtmers.length === 0) {
-            const labelIndex = lgtmers.map(u => u.username).indexOf("lgtm")
-            labels.splice(labelIndex, 1)
+            if (lgtmers.length === 0) {
+                const labelIndex = lgtmers.map(u => u.username).indexOf("lgtm")
+                labels.splice(labelIndex, 1)
+            }
+
+            return this.client.MergeRequests
+                .edit(rx.project_id, rx.merge_request.iid,
+                    { labels: labels.join(","), ext: { lgtmers: lgtmers.map(u => u.username) } })
+        } catch (e) {
+            return Promise.reject(e)
         }
-
-        return this.client.MergeRequests
-            .edit(rx.project_id, rx.merge_request.iid,
-                { labels: labels.join(","), ext: { lgtmers: lgtmers.map(u => u.username) } })
     }
 }

@@ -1,15 +1,14 @@
 import { MergeRequests, Snippets, Users } from "../interfaces/GitClient";
-import { Snippet } from "../interfaces/Snippet";
-import { MergeRequestId, MergeRequest } from "../interfaces/MergeRequest";
-import { ProjectId } from "../interfaces/Project";
-import { Storage } from "../interfaces/Storage"
+import { MergeRequestId, MergeRequest } from "../interfaces/structs/MergeRequest";
+import { ProjectId } from "../interfaces/structs/Project";
 import * as YAML from "yaml"
 import { GitlabStorage } from "./GitlabStorage";
-import { User } from "../interfaces/User";
+import { User } from "../interfaces/structs/User";
+import { PromiseWrapper } from "../utils/PromiseWrapper";
 
 export class MergeRequestDecorator implements MergeRequests {
-    private mr
-    private snippets
+    private mr: MergeRequests
+    private snippets: Snippets
     private users: Users
 
     constructor(mr: MergeRequests, snippets: Snippets, users: Users, basePath?: string) {
@@ -29,21 +28,35 @@ export class MergeRequestDecorator implements MergeRequests {
     }
 
     async show(pid: ProjectId, mrid: MergeRequestId, options?: object) {
-        const { reviewers, lgtmers } = await this.readFromStorage(pid, mrid, options);
-        const users = await <Promise<User[]>>this.users.all()
-        const payload = await <Promise<MergeRequest>>this.mr.show(pid, mrid)
-        payload.reviewers = []
-        payload.lgtmers = []
-        users.filter(u => reviewers.includes(u.username)).forEach(u => payload.reviewers.push(u))
-        users.filter(u => lgtmers.includes(u.username)).forEach(u => payload.lgtmers.push(u))
-        return payload
+        try {
+            const { reviewers, lgtmers } = await this.readFromStorage(pid, mrid, options);
+            const users = await <Promise<User[]>>this.users.all()
+            const payload = await <Promise<MergeRequest>>this.mr.show(pid, mrid)
+            payload.reviewers = []
+            payload.lgtmers = []
+            users.filter(u => reviewers.includes(u.username)).forEach(u => payload.reviewers.push(u))
+            users.filter(u => lgtmers.includes(u.username)).forEach(u => payload.lgtmers.push(u))
+            return payload
+        } catch (e) {
+            return Promise.reject(e)
+        }
     }
 
     private async readFromStorage(pid: ProjectId, mrid: MergeRequestId, options?: object) {
         const storage = this.makeStorage(pid, mrid, options);
-        const reviewers = YAML.parse(await storage.read())['reviewers'] || [];
-        const lgtmers = YAML.parse(await storage.read())['lgtmers'] || [];
-        return { reviewers, lgtmers };
+        try {
+            const document = YAML.parse(await storage.read());
+
+            const reviewers = Object.prototype.hasOwnProperty("reviewers") ?
+                document['reviewers'] : [];
+
+            const lgtmers = Object.prototype.hasOwnProperty("lgtmers") ?
+                document['lgtmers'] : [];
+
+            return { reviewers, lgtmers };
+        } catch (e) {
+            return Promise.reject(e)
+        }
     }
 
     private async update(pid: ProjectId, mrid: MergeRequestId, options: object): Promise<object> {

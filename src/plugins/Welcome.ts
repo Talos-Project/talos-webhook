@@ -1,6 +1,6 @@
 import { Plugin } from "../interfaces/Plugin"
 import { GitClient } from "../interfaces/GitClient";
-import { MergeRequestEvent } from "../interfaces/MergeRequestEvent";
+import { MergeRequestEvent } from "../interfaces/events/MergeRequestEvent";
 
 export class Welcome implements Plugin<any, Promise<any>> {
 
@@ -13,10 +13,10 @@ export class Welcome implements Plugin<any, Promise<any>> {
     handle(rx: MergeRequestEvent): Promise<any> {
 
         if (rx.object_kind !== "merge_request")
-            return
+            return Promise.resolve()
 
         if (!rx.object_attributes.action || rx.object_attributes.action !== "open")
-            return
+            return Promise.resolve()
 
         const message = `
             Hi @${rx.user.username}! Thanks for your MR.
