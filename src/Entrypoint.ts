@@ -1,12 +1,13 @@
 import * as express from 'express'
 import * as bodyparser from 'body-parser'
-import { User } from './interfaces/User';
+import { User } from './interfaces/structs/User';
 import { Demuxer } from './Demuxer';
 import { GitlabClient } from './gitlab/GitlabClient';
 import { PluginFactory } from './PluginFactory';
-import { GenericEvent } from './interfaces/GenericEvent';
+import { GenericEvent } from './interfaces/events/GenericEvent';
+import { ConsoleLogger } from './utils/ConsoleLogger';
 
-const plugins = ["meow", "lgtm", "welcome","test-runner"]
+const plugins = ["meow", "lgtm", "welcome", "test-runner"]
 
 require("dotenv").config();
 
@@ -15,15 +16,15 @@ const gitConfig = {
   token: process.env.token
 };
 
-const gitExt = new GitlabClient(gitConfig)
-
-gitExt.RepositoryOwners.show(528).then(console.warn)
+const gitExt = new GitlabClient(gitConfig);
 
 const factory = new PluginFactory(gitExt)
-const dmuxer = new Demuxer(plugins.map(plugin => factory.make(plugin)))
+const dmuxer = new Demuxer(
+  plugins.map(plugin => factory.make(plugin)),
+  new ConsoleLogger()
+)
 
-
-export let botInfo: User;
+let botInfo: User;
 
 gitExt.Users.current()
   .then(u => botInfo = <User>u)
@@ -37,7 +38,7 @@ api.post("/hook", (req, res) => {
 
   res.contentType("application/json")
 
-  const payload = <GenericEvent> req.body;
+  const payload = <GenericEvent>req.body;
 
   console.log(payload);
 
@@ -49,7 +50,7 @@ api.post("/hook", (req, res) => {
   dmuxer.dispatch(payload)
 
   res.json({ status: "success" });
-  
+
 });
 
 app.use(bodyparser.json());
@@ -58,4 +59,3 @@ app.use("/api/v1", api);
 app.listen(PORT, () => {
   console.log(`Listening on ${PORT}`);
 });
-
