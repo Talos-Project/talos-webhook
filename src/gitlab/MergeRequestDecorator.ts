@@ -23,7 +23,8 @@ export class MergeRequestDecorator implements MergeRequests {
         if (Object.keys(options).includes("ext"))
             ext = this.update(project_id, iid, options["ext"])
 
-        return Object.assign(await this.mr.edit(project_id, iid, options).then(v => v)
+        return Object.assign(await this.mr.edit(project_id, iid, options)
+            .then(v => v)
             .catch(_ => new Object({ iid, project_id })), await ext)
     }
 

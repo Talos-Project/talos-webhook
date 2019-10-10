@@ -3,6 +3,7 @@ import { Caturday } from "./plugins/Caturday";
 import { LGTM } from "./plugins/LGTM";
 import { Welcome } from "./plugins/Welcome";
 import { TestRunner } from "./plugins/TestRunner";
+import { Blunderbuss } from "./plugins/Blunderbuss";
 
 export class PluginFactory {
 
@@ -12,7 +13,8 @@ export class PluginFactory {
             Caturday: Caturday.prototype,
             LGTM: LGTM.prototype,
             Welcome: Welcome.prototype,
-            TestRunner: TestRunner.prototype
+            TestRunner: TestRunner.prototype,
+            Blunderbuss: Blunderbuss.prototype
          }
 
     constructor(client: GitClient) {

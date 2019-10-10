@@ -28,6 +28,6 @@ export class GitlabClient implements GitClient {
         this.Pipelines = this.client.Pipelines
         this.Snippets = this.client.Snippets
 
-        this.RepositoryOwners = new GitlabOwners(this.client)
+        this.RepositoryOwners = new GitlabOwners(this)
     }
 }
