@@ -4,6 +4,7 @@ import { NoteEvent } from "../interfaces/events/NoteEvent";
 import { RepositoryOwners } from "../interfaces/structs/RepositoryOwners";
 import { MergeRequest } from "../interfaces/structs/MergeRequest";
 import { User } from "../interfaces/structs/User";
+import { MergeRequestEvent } from "../interfaces/events/MergeRequestEvent";
 
 export class Blunderbuss implements Plugin<any, Promise<any>> {
 
@@ -13,16 +14,46 @@ export class Blunderbuss implements Plugin<any, Promise<any>> {
         this.client = client
     }
 
-    async handle(rx: NoteEvent): Promise<any> {
-        if (rx.object_kind !== "note")
-            return Promise.resolve()
+    async handle(rx: any): Promise<any> {
 
-        if (rx.object_attributes.note.includes("/ready-for-review") ||
-            rx.object_attributes.note.includes("/rfr"))
-            return this.triggerSelection(rx)
+        if (rx.object_kind === "merge_request")
+            return this.handleMergeRequestEvent(rx)
+
+        if (rx.object_kind === "note")
+            return this.handleNoteEvent(rx)
+
+        return Promise.resolve()
+
     }
 
-    async triggerSelection(rx: NoteEvent) {
+    private async handleMergeRequestEvent(rx: MergeRequestEvent) {
+        const action = rx.object_attributes.action
+
+        // TODO Notify participants about the state of MR
+        if (action !== "close" && action !== "merge")
+            return Promise.resolve()
+
+        const { changes_count, reviewers } = <MergeRequest>await this.client
+            .MergeRequests.show(rx.project.id, rx.object_attributes.iid)
+
+        this.updateWeights(reviewers, -parseInt(changes_count))
+
+        return this.client.MergeRequests
+            .edit(
+                rx.project.id, 
+                rx.object_attributes.iid, 
+                { 
+                    assignee_id: null, 
+                    ext: { reviewers: [], lgtmers: [] } 
+                })
+    }
+
+    private async handleNoteEvent(rx: NoteEvent) {
+        const note = rx.object_attributes.note;
+
+        if (!note.includes("/ready-for-review") && !note.includes("/rfr"))
+            return Promise.resolve()
+
         if (rx.merge_request.assignee_id !== null)
             return Promise.resolve()
 
@@ -34,6 +65,7 @@ export class Blunderbuss implements Plugin<any, Promise<any>> {
                     rx.project_id, rx.merge_request.iid,
                     {
                         assignee_id: approver.id,
+                        title: rx.merge_request.title.replace('WIP: ', ''),
                         ext: { reviewers: reviewers.map(r => r.username) }
                     }
                 )
@@ -42,7 +74,7 @@ export class Blunderbuss implements Plugin<any, Promise<any>> {
 
             return this.replyToThread(result)
         } catch (e) {
-            return Promise.reject(e) 
+            return Promise.reject(e)
         }
     }
 
@@ -67,7 +99,7 @@ export class Blunderbuss implements Plugin<any, Promise<any>> {
 
     private async updateWeights(revs: User[], weight: number) {
         try {
-            revs.forEach(r => 
+            revs.forEach(r =>
                 r.weight = isNaN(r.weight) ? weight : r.weight + weight
             )
             return this.client.Users.edit(revs)
