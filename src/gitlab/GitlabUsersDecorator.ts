@@ -12,7 +12,6 @@ interface WeightMap {
     name: string
     weight: number
 }
-// TODO Rename to Reviewers
 export class GitlabUsersDecorator implements Users {
 
     private gitlabUsers: Users
@@ -29,55 +28,82 @@ export class GitlabUsersDecorator implements Users {
     }
 
     async all() {
-        if (this.users.length === 0) {
+        try {
             await this.readWM()
+            return this.users
+        } catch (e) {
+            Promise.reject(e)
         }
-        return this.users
     }
 
     async current() {
-        return await this.gitlabUsers.current()
+        try {
+            return await this.gitlabUsers.current()
+        } catch (e) {
+            Promise.reject(e)
+        }
     }
 
     async show(uid: UserId) {
-        await this.readWM()
-        return this.users.find(u => u.id === uid)
+        try {
+            await this.readWM()
+            return this.users.find(u => u.id === uid)
+        } catch (e) {
+            Promise.reject(e)
+        }
     }
     async update(wm: WeightMap) {
-        await this.readWM()
-        this.users.find(u => u.username === wm.name).weight = wm.weight
-        this.write()
+        try {
+            await this.readWM()
+            this.users.find(u => u.username === wm.name).weight = wm.weight
+            this.write()
+        } catch (e) {
+            Promise.reject(e)
+        }
     }
 
     async increaseWeight(wm: WeightMap) {
-        await this.readWM()
-        const u = this.users.find(u => u.username === wm.name)
-        wm.weight = isNaN(wm.weight) ? 0 : wm.weight + (isNaN(u.weight) ? 0 : u.weight)
-        this.update(wm)
+        try {
+            await this.readWM()
+            const u = this.users.find(u => u.username === wm.name)
+            wm.weight = isNaN(wm.weight) ? 0 : wm.weight + (isNaN(u.weight) ? 0 : u.weight)
+            this.update(wm)
+        } catch (e) {
+            Promise.reject(e)
+        }
     }
 
     async decreaseWeight(wm: WeightMap) {
-        await this.readWM()
-        const u = this.users.find(u => u.username === wm.name)
-        wm.weight = isNaN(wm.weight) ? 0 : wm.weight - (isNaN(u.weight) ? 0 : u.weight)
-        this.update(wm)
+        try {
+            await this.readWM()
+            const u = this.users.find(u => u.username === wm.name)
+            wm.weight = isNaN(wm.weight) ? 0 : wm.weight - (isNaN(u.weight) ? 0 : u.weight)
+            this.update(wm)
+        } catch (e) {
+            Promise.reject(e)
+        }
     }
 
     private async readWM() {
-        if (this.users.length !== 0)
-            return
-        const users = (await <User[]>this.gitlabUsers.all())
-        const snippet = await this.storage.read()
-        const payload = YAML.parse(snippet);
-        users.forEach(u => u["weight"] = payload[u.username])
-        this.users = users
+        try {
+            const users = (await <User[]>this.gitlabUsers.all())
+            const snippet = await this.storage.read()
+            const payload = YAML.parse(snippet);
+            users.forEach(u => u["weight"] = payload[u.username])
+            this.users = users
+        } catch (e) {
+            Promise.reject(e)
+        }
     }
 
     private async write() {
-        // FIXME return success status
-        await this.readWM()
-        const payload = {}
-        this.users.forEach(u => payload[u.username] = u.weight)
-        this.storage.write(YAML.stringify(payload))
+        try {
+            await this.readWM()
+            const payload = {}
+            this.users.forEach(u => payload[u.username] = u.weight)
+            this.storage.write(YAML.stringify(payload))
+        } catch (e) {
+            Promise.reject(e)
+        }
     }
 }
