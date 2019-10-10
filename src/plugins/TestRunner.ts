@@ -12,13 +12,13 @@ export class TestRunner implements Plugin<any, Promise<any>> {
         this.client = client
     }
 
-    async handle(rx): Promise<any> {
+    async handle(rx: any): Promise<any> {
         if (rx.object_kind === "note")
             return this.handlePipelineRequest(rx)
 
         if (rx.object_kind === "pipeline")
             return this.handlePipelineEvent(rx)
-        
+
     }
 
     private async handlePipelineRequest(rx: NoteEvent) {
@@ -81,15 +81,15 @@ export class TestRunner implements Plugin<any, Promise<any>> {
     }
 
     private generateReportSummary(reportURL: string) {
-        return `
-            The following table represents several test results, say \`/test\` to start them over: 
-
-            Test Name | Status | Details 
-            ---|:---:|--- 
-            Code Quality | :white_check_mark: | [Link](${reportURL}) 
-            Unit Tests | :warning: | N/A 
-            Code Coverage | :no_entry: | Link 
-        `;
+        return [
+            `The following table represents several test results, 
+            say \`/test\` to start them over: `, "",
+            "Test Name | Status | Details ",
+            "---|:---:|---",
+            `Code Quality | :white_check_mark: | [Link](${reportURL})`,
+            "Unit Tests | :warning: | N/A",
+            "Code Coverage | :no_entry: | Link"
+        ].join("\n")
     }
 
 }
