@@ -3,6 +3,7 @@ import { GitClient } from "../interfaces/GitClient";
 import { NoteEvent } from "../interfaces/events/NoteEvent";
 import { RepositoryOwners } from "../interfaces/structs/RepositoryOwners";
 import { MergeRequest } from "../interfaces/structs/MergeRequest";
+import { User } from "../interfaces/structs/User";
 
 export class Blunderbuss implements Plugin<any, Promise<any>> {
 
@@ -36,9 +37,12 @@ export class Blunderbuss implements Plugin<any, Promise<any>> {
                         ext: { reviewers: reviewers.map(r => r.username) }
                     }
                 )
+            // TODO Chain operations
+            this.updateWeights(reviewers, parseInt(result.changes_count))
+
             return this.replyToThread(result)
         } catch (e) {
-            return Promise.reject(e)
+            return Promise.reject(e) 
         }
     }
 
@@ -56,6 +60,17 @@ export class Blunderbuss implements Plugin<any, Promise<any>> {
                     .filter(r => r.id !== rx.merge_request.author_id)
                     .sort((a, b) => a.weight - b.weight).slice(0, 2)
             }
+        } catch (e) {
+            return Promise.reject(e)
+        }
+    }
+
+    private async updateWeights(revs: User[], weight: number) {
+        try {
+            revs.forEach(r => 
+                r.weight = isNaN(r.weight) ? weight : r.weight + weight
+            )
+            return this.client.Users.edit(revs)
         } catch (e) {
             return Promise.reject(e)
         }

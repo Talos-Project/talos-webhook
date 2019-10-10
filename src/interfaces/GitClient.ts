@@ -50,5 +50,6 @@ export interface Snippets {
 export interface Users {
     all(): Promise<User[]> | any
     current(): Promise<User> | any
+    edit(users: User[]): Promise<User> | any
     show(userId: UserId): Promise<User> | any
 }
