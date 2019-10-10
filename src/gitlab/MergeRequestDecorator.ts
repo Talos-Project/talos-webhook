@@ -4,7 +4,6 @@ import { ProjectId } from "../interfaces/structs/Project";
 import * as YAML from "yaml"
 import { GitlabStorage } from "./GitlabStorage";
 import { User } from "../interfaces/structs/User";
-import { PromiseWrapper } from "../utils/PromiseWrapper";
 
 export class MergeRequestDecorator implements MergeRequests {
     private mr: MergeRequests
@@ -46,12 +45,13 @@ export class MergeRequestDecorator implements MergeRequests {
     private async readFromStorage(pid: ProjectId, mrid: MergeRequestId, options?: object) {
         const storage = this.makeStorage(pid, mrid, options);
         try {
-            const document = YAML.parse(await storage.read());
+            const file = await storage.read();
+            const document = YAML.parse(file);
 
-            const reviewers = Object.prototype.hasOwnProperty("reviewers") ?
+            const reviewers = document.hasOwnProperty("reviewers") ?
                 document['reviewers'] : [];
 
-            const lgtmers = Object.prototype.hasOwnProperty("lgtmers") ?
+            const lgtmers = document.hasOwnProperty("lgtmers") ?
                 document['lgtmers'] : [];
 
             return { reviewers, lgtmers };
