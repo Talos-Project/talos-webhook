@@ -79,13 +79,9 @@ export class Blunderbuss implements Plugin<any, Promise<any>> {
     private async replyToThread(mr: MergeRequest) {
         const message = [
             "The following table represents the participants of this MR",
-            // "", "Name | Role", "---|---",
             "", "Role | Name", "---|---",
-            // `@${author.username} | Author`,
             `Author | @${mr.author.username}`,
-            // `@${approver.username} | Approver`,
             `Approver | @${mr.assignee.username}`,
-            // ...reviewers.map(r => `@${r.username} | Reviewer`), "",
             `Reviewers | @${mr.reviewers.join(", @")}`, "",
             "Reviewers can accept the MR using `/lgtm` command. Approver can merge the MR using `/approve`."
         ]
