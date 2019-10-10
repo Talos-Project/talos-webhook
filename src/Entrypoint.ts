@@ -8,11 +8,11 @@ import { GenericEvent } from './interfaces/events/GenericEvent';
 import { ConsoleLogger } from './utils/ConsoleLogger';
 
 const plugins = [
-  "Caturday", 
-  "LGTM", 
-  "Welcome", 
-  "TestRunner", 
-  "Blunderbuss", 
+  "Caturday",
+  "LGTM",
+  "Welcome",
+  "TestRunner",
+  "Blunderbuss",
   "Approve"
 ]
 
@@ -49,8 +49,12 @@ api.post("/hook", (req, res) => {
 
   console.log(payload);
 
-  if (payload.user.username === botInfo.username) {
-    res.json({ status: "ignored", reason: "self-generated payload" })
+  if (payload.user.username === botInfo.username &&
+    payload.object_kind === "note") {
+    res.json({
+      status: "ignored",
+      reason: "self-generated payload"
+    })
     return
   }
 
