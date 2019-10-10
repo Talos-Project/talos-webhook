@@ -2,11 +2,11 @@ import { Plugin } from "../interfaces/Plugin"
 import { GitClient } from "../interfaces/GitClient";
 import { NoteEvent } from "../interfaces/events/NoteEvent";
 import { RepositoryOwners } from "../interfaces/structs/RepositoryOwners";
+import { MergeRequest } from "../interfaces/structs/MergeRequest";
 
 export class Blunderbuss implements Plugin<any, Promise<any>> {
 
     private client: GitClient
-    private message: string
 
     constructor(client: GitClient) {
         this.client = client
@@ -18,21 +18,17 @@ export class Blunderbuss implements Plugin<any, Promise<any>> {
 
         if (rx.object_attributes.note.includes("/ready-for-review") ||
             rx.object_attributes.note.includes("/rfr"))
-            return this.selectParticipants(rx)
+            return this.triggerSelection(rx)
     }
 
-    async selectParticipants(rx: NoteEvent) {
+    async triggerSelection(rx: NoteEvent) {
         if (rx.merge_request.assignee_id !== null)
             return Promise.resolve()
 
         try {
-            const approver = await this.selectApprover(rx)
-            const reviewers = await this.selectReviewers(rx)
+            const { approver, reviewers } = await this.selectParticipants(rx)
 
-            this.client.MergeRequestNotes
-                .create(rx.project_id, rx.merge_request.iid, this.message)
-
-            return this.client.MergeRequests
+            const result = <MergeRequest>await this.client.MergeRequests
                 .edit(
                     rx.project_id, rx.merge_request.iid,
                     {
@@ -40,38 +36,46 @@ export class Blunderbuss implements Plugin<any, Promise<any>> {
                         ext: { reviewers: reviewers.map(r => r.username) }
                     }
                 )
+            return this.replyToThread(result)
         } catch (e) {
             return Promise.reject(e)
         }
     }
 
-    private async selectApprover(rx: NoteEvent) {
+    private async selectParticipants(rx: NoteEvent) {
         try {
-            const { approvers } = <RepositoryOwners>await this.client
+            const { approvers, reviewers } = <RepositoryOwners>await this.client
                 .RepositoryOwners.show(rx.project_id)
 
             const candidates = approvers
                 .filter(c => c.id !== rx.merge_request.author_id)
 
-            return candidates[Math.floor(Math.random() * candidates.length)]
-
+            return {
+                approver: candidates[Math.floor(Math.random() * candidates.length)],
+                reviewers: reviewers
+                    .filter(r => r.id !== rx.merge_request.author_id)
+                    .sort((a, b) => a.weight - b.weight).slice(0, 2)
+            }
         } catch (e) {
             return Promise.reject(e)
         }
     }
 
-    private async selectReviewers(rx: NoteEvent) {
-        try {
-            const { reviewers } = <RepositoryOwners>await this.client
-                .RepositoryOwners.show(rx.project_id)
+    private async replyToThread(mr: MergeRequest) {
+        const message = [
+            "The following table represents the participants of this MR",
+            // "", "Name | Role", "---|---",
+            "", "Role | Name", "---|---",
+            // `@${author.username} | Author`,
+            `Author | @${mr.author.username}`,
+            // `@${approver.username} | Approver`,
+            `Approver | @${mr.assignee.username}`,
+            // ...reviewers.map(r => `@${r.username} | Reviewer`), "",
+            `Reviewers | @${mr.reviewers.join(", @")}`, "",
+            "Reviewers can accept the MR using `/lgtm` command. Approver can merge the MR using `/approve`."
+        ]
 
-            return reviewers
-                .filter(r => r.id !== rx.merge_request.author_id)
-                .sort((a, b) => a.weight - b.weight).slice(0, 2)
-
-        } catch (e) {
-            Promise.reject(e)
-        }
+        return this.client.MergeRequestNotes
+            .create(mr.project_id, mr.iid, message.join("\n"))
     }
-
 }
