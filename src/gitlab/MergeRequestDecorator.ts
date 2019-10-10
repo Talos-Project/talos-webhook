@@ -16,6 +16,10 @@ export class MergeRequestDecorator implements MergeRequests {
         this.users = users
     }
 
+    accept(project_id: ProjectId, mrId: ProjectId): Promise<object> {
+        return this.mr.accept(project_id, mrId)
+    }
+
     async edit(project_id: ProjectId, iid: MergeRequestId, options?: object): Promise<object> {
         let ext;
 

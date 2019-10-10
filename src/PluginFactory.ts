@@ -4,6 +4,7 @@ import { LGTM } from "./plugins/LGTM";
 import { Welcome } from "./plugins/Welcome";
 import { TestRunner } from "./plugins/TestRunner";
 import { Blunderbuss } from "./plugins/Blunderbuss";
+import { Approve } from "./plugins/Approve";
 
 export class PluginFactory {
 
@@ -14,7 +15,8 @@ export class PluginFactory {
             LGTM: LGTM.prototype,
             Welcome: Welcome.prototype,
             TestRunner: TestRunner.prototype,
-            Blunderbuss: Blunderbuss.prototype
+            Blunderbuss: Blunderbuss.prototype,
+            Approve: Approve.prototype
          }
 
     constructor(client: GitClient) {

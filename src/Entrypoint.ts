@@ -7,7 +7,14 @@ import { PluginFactory } from './PluginFactory';
 import { GenericEvent } from './interfaces/events/GenericEvent';
 import { ConsoleLogger } from './utils/ConsoleLogger';
 
-const plugins = ["Caturday", "LGTM", "Welcome", "TestRunner", "Blunderbuss"]
+const plugins = [
+  "Caturday", 
+  "LGTM", 
+  "Welcome", 
+  "TestRunner", 
+  "Blunderbuss", 
+  "Approve"
+]
 
 require("dotenv").config();
 

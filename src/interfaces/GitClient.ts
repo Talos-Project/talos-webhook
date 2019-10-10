@@ -22,6 +22,7 @@ export interface GitClient {
 export interface MergeRequests {
     edit(project_id: ProjectId, mrId: MergeRequestId, options: object): Promise<object>
     show(project_id: ProjectId, mrId: MergeRequestId, options?: object): Promise<object>
+    accept(project_id: ProjectId, mrId: MergeRequestId): Promise<object>
 }
 
 export interface MergeRequestNotes {
