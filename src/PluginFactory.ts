@@ -23,6 +23,10 @@ export class PluginFactory {
         this.client = client
     }
 
+    public getAvailablePluginNames() {
+        return Object.keys(this.pluginMap);
+    }
+
     public make(pluginName: string, config?: object) {
 
         if (Object.keys(this.pluginMap).indexOf(pluginName) === -1)
@@ -30,7 +34,7 @@ export class PluginFactory {
                 handle: () => { 
                     return Promise.reject(
                         `Invalid plugin name provided: "${pluginName}". ` +
-                        `List of available plugins: ${Object.keys(this.pluginMap).join(', ')}`
+                        `List of available plugins: ${this.getAvailablePluginNames().join(', ')}`
                         ) 
                 }
             })
