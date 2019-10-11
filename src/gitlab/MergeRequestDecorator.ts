@@ -50,7 +50,7 @@ export class MergeRequestDecorator implements MergeRequests {
         const storage = this.makeStorage(pid, mrid, options);
         try {
             const file = await storage.read();
-            const document = YAML.parse(file);
+            const document = YAML.parse(file) || {};
 
             const reviewers = document.hasOwnProperty("reviewers") ?
                 document['reviewers'] : [];
