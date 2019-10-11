@@ -1,6 +1,6 @@
-import { RepositoryFiles } from "../src/GitProvider";
-import { ProjectId } from "../src/Project"
-import { RepoBlob } from "../src/RepoBlob";
+import { RepositoryFiles } from "../src/interfaces/GitClient";
+import { ProjectId } from "../src/interfaces/structs/Project"
+import { RepoBlob } from "../src/interfaces/structs/RepoBlob";
 
 export class RepositoryFilesMock implements RepositoryFiles {
     

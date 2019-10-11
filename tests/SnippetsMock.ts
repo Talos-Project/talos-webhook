@@ -1,4 +1,5 @@
-import { Snippets, Snippet, SnippetId, SnippetVisibility } from "../src/GitProvider";
+import { Snippets, SnippetId, SnippetVisibility } from "../src/interfaces/GitClient";
+import { Snippet } from "../src/interfaces/structs/Snippet";
 
 export class SnippetsMock implements Snippets {
 

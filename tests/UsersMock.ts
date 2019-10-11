@@ -1,5 +1,5 @@
-import { Users, UserId } from "../src/GitProvider";
-import { User } from "../src/User";
+import { Users, UserId } from "../src/interfaces/GitClient";
+import { User } from "../src/interfaces/structs/User";
 
 export class UsersMock implements Users {
 
@@ -7,6 +7,9 @@ export class UsersMock implements Users {
 
     constructor(users?: User[]) {
         this.users = users
+    }
+    edit(users: User[]) {
+        throw new Error("Method not implemented.");
     }
 
     all() {
