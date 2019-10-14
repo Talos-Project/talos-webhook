@@ -18,29 +18,34 @@ export class GitlabOwners implements RepositoryOwners {
     }
 
     async show(pid: ProjectId, options?) {
-        let branch = "master"
-        let filename = "OWNERS"
+        try {
+            let branch = "master"
+            let filename = "OWNERS"
 
-        if (options && options.branch)
-            branch = options.branch
+            if (options && options.branch)
+                branch = options.branch
 
-        if (options && options.filename)
-            filename = options.filename
+            if (options && options.filename)
+                filename = options.filename
 
-        const blob = await <Promise<RepoBlob>>this.client
-            .RepositoryFiles.show(pid, filename, branch)
+            const blob = await <Promise<RepoBlob>>this.client
+                .RepositoryFiles.show(pid, filename, branch)
 
-        const users: User[] = await this.client.Users.all()
+            const users: User[] = await this.client.Users.all()
 
-        const { approvers, reviewers }: Owners = YAML.parse(Buffer.from((blob).content, "base64")
-            .toString("ascii"));
+            const { approvers, reviewers }: Owners = YAML
+                .parse(Buffer.from((blob).content, "base64")
+                .toString("ascii"));
 
-        return {
-            project_id: pid,
-            approvers: approvers
-                .map(username => users.find(u => u.username === username)),
-            reviewers: reviewers
-                .map(username => users.find(u => u.username === username)) 
+            return {
+                project_id: pid,
+                approvers: approvers
+                    .map(username => users.find(u => u.username === username)),
+                reviewers: reviewers
+                    .map(username => users.find(u => u.username === username))
+            }
+        } catch (e) {
+            return Promise.reject(e)
         }
     }
 
