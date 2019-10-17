@@ -7,4 +7,4 @@ RUN npm i --silent --production
 COPY . .
 RUN npm run build
 EXPOSE 3000
-CMD npm start
+CMD node build/Entrypoint.js

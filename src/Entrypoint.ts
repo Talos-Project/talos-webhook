@@ -6,6 +6,7 @@ import { GitlabClient } from "./gitlab/GitlabClient";
 import { PluginFactory } from "./PluginFactory";
 import { GenericEvent } from "./interfaces/events/GenericEvent";
 import { ConsoleLogger } from "./utils/ConsoleLogger";
+import { LoggerWrapper } from "./utils/LoggerWrapper";
 
 const plugins = [
   "Caturday",
@@ -26,7 +27,7 @@ const gitConfig = {
 const gitExt = new GitlabClient(gitConfig);
 
 const factory = new PluginFactory(gitExt);
-const logger = new ConsoleLogger();
+const logger = new LoggerWrapper(new ConsoleLogger());
 const dmuxer = new Demuxer(plugins.map(plugin => factory.make(plugin)), logger);
 
 let botInfo: User;
@@ -74,5 +75,5 @@ app.use(bodyparser.json());
 app.use("/api/v1", api);
 
 app.listen(PORT, () => {
-  console.log(`Listening on ${PORT}`);
+  logger.info(`Listening on ${PORT}`);
 });

@@ -13,18 +13,14 @@ export class Demuxer {
 
     dispatch(payload: any) {
         this.plugins.forEach(plugin => {
-            plugin
-                .handle(payload)
-                .catch(e =>
-                    this.logger.error(
-                        JSON.stringify(Object.assign(e,
-                            {
-                                pluginName: plugin.constructor.name,
-                                request: payload,
-                            }
-                        ))
-                    )
-                );
+            plugin.handle(payload).catch(e =>
+                this.logger.error(
+                    Object.assign(e, {
+                        pluginName: plugin.constructor.name,
+                        request: payload
+                    })
+                )
+            );
         });
     }
 }
