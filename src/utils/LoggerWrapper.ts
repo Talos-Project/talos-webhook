@@ -8,42 +8,26 @@ export class LoggerWrapper implements Logger {
     }
 
     debug(message?: any, ...optionalParams: any[]): void {
-        this.logger.debug(
-            JSON.stringify({
-                level: "debug",
-                message,
-                timestamp: new Date().toISOString()
-            }),
-        );
+        this.logger.debug(this.format("debug", message));
     }
     error(message?: any, ...optionalParams: any[]): void {
-        this.logger.error(
-            JSON.stringify({
-                level: "error",
-                message,
-                timestamp: new Date().toISOString()
-            }),
-        );
+        this.logger.error(this.format("error", message));
     }
     info(message?: any, ...optionalParams: any[]): void {
-        this.logger.info(
-            JSON.stringify({
-                level: "info",
-                message,
-                timestamp: new Date().toISOString()
-            })
-        );
+        this.logger.info(this.format("info", message));
     }
     log(message?: any, ...optionalParams: any[]): void {
         this.logger.log(JSON.stringify(message), optionalParams);
     }
     warn(message?: any, ...optionalParams: any[]): void {
-        this.logger.warn(
-            JSON.stringify({
-                level: "warn",
-                message,
-                timestamp: new Date().toISOString()
-            }),
-        );
+        this.logger.warn(this.format("warn", message));
+    }
+
+    private format(level: String, message: String) {
+        return JSON.stringify({
+            level,
+            message,
+            timestamp: new Date().toISOString()
+        })
     }
 }
