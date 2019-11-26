@@ -23,7 +23,7 @@ export class LoggerWrapper implements Logger {
         this.logger.warn(this.format("warn", message));
     }
 
-    private format(level: String, message: String) {
+    private format(level: string, message: string) {
         return JSON.stringify({
             level,
             message,
