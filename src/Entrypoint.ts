@@ -2,33 +2,22 @@ import * as express from "express";
 import * as bodyparser from "body-parser";
 import { User } from "./interfaces/structs/User";
 import { Demuxer } from "./Demuxer";
-import { GitlabClient } from "./gitlab/GitlabClient";
-import { PluginFactory } from "./PluginFactory";
 import { GenericEvent } from "./interfaces/events/GenericEvent";
 import { ConsoleLogger } from "./utils/ConsoleLogger";
 import { LoggerWrapper } from "./utils/LoggerWrapper";
+import { ConfigLoader } from "./ConfigLoader";
+import { resolve } from "path";
+import { GitProvider } from "./GitProvider";
 
-const plugins = [
-  "Caturday",
-  "LGTM",
-  "Welcome",
-  "TestRunner",
-  "Blunderbuss",
-  "Approve"
-];
 
-require("dotenv").config();
-
-const gitConfig = {
-  host: process.env.host,
-  token: process.env.token
-};
-
-const gitExt = new GitlabClient(gitConfig);
-
-const factory = new PluginFactory(gitExt);
+const config = new ConfigLoader(resolve('.talos.yaml')).getConfig()
 const logger = new LoggerWrapper(new ConsoleLogger());
-const dmuxer = new Demuxer(plugins.map(plugin => factory.make(plugin)), logger);
+
+const gitExt = GitProvider.getInstance(config.git)
+
+const plugins = config.plugins.map(pluginName => new (require(pluginName)).default(config))
+
+const dmuxer = new Demuxer(plugins, logger);
 
 let botInfo: User;
 

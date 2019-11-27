@@ -1,0 +1,13 @@
+git:
+  client: talos-gitlab-client
+  host: https://gitlab.com/
+  token: <OAuth Token>
+
+plugins:
+- talos-caturday
+- talos-plugin-boilerplate
+- talos-welcome
+- talos-blunderbuss
+- talos-lgtm
+- talos-approve
+- talos-testrunner
