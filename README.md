@@ -16,7 +16,21 @@ Because of its high modularity, every use case is a plugin. You can choose one o
 Or you can implement functionality for your business needs by writing your plugin. For such case you can start from forking [talos-plugin-boilerplate](https://github.com/aspartame21/talos-plugin-boilerplate).
 
 ## Use cases
+
 ## Installation
+### Node Environment
+
+### Docker Swarm
+
+### Kubernetes
+
 ## Configuration
 ## Contribution
-## Licence
+
+
+## License
+
+[MIT](https://github.com/aspartame21/talos/blob/master/LICENSE)
+
+---
+_Copyright 2019 [Talos CI](https://github.com/aspartame21/talos/graphs/contributors)_
