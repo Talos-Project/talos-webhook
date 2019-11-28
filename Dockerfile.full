@@ -1,0 +1,9 @@
+FROM docker.pkg.github.com/aspartame21/talos/talos-webhook:latest
+RUN npm i talos-gitlab-client \
+    talos-welcome \
+    talos-blunderbuss \
+    talos-testrunner \
+    talos-lgtm \
+    talos-approve \
+    talos-caturday 
+    
