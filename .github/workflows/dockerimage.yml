@@ -1,6 +1,9 @@
 name: Docker Image CI
 
-on: [push]
+on:
+  push:
+    branches:
+      - master
 
 jobs:
 
@@ -10,9 +13,16 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag xtraterrestreal/talos-ci:$GITHUB_SHA
+      run: docker build . -f Dockerfile -t docker.pkg.github.com/$GITHUB_REPOSITORY/${{ secrets.DOCKER_IMAGE_NAME }}:$GITHUB_SHA -t ${{ secrets.DOCKERHUB_USER }}/${{ secrets.DOCKER_IMAGE_NAME }}:$GITHUB_SHA
+      
+    - name: Login to GitHub registrty
+      run: docker login docker.pkg.github.com -u $GITHUB_ACTOR -p ${{ secrets.GITHUB_TOKEN }}
+    - name: Push Docker image to registrty
+      run: docker push docker.pkg.github.com/$GITHUB_REPOSITORY/${{ secrets.DOCKER_IMAGE_NAME }}
+      
     - name: Login to DockerHub
-      run: mkdir $HOME/.docker && echo $regcred > $HOME/.docker/config.json
-    - name: Push the Docker image to the DockerHub
-      run: docker push xtraterrestreal/talos-ci  
+      run: docker login -u ${{ secrets.DOCKERHUB_USER }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Push Docker image to DockerHub
+      run: docker push ${{ secrets.DOCKERHUB_USER }}/${{ secrets.DOCKER_IMAGE_NAME }}
