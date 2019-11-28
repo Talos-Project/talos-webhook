@@ -13,6 +13,6 @@ jobs:
     - name: Build the Docker image
       run: docker build . --file Dockerfile --tag xtraterrestreal/talos-ci:$GITHUB_SHA
     - name: Login to DockerHub
-      run: mkdir $HOME/.docker && echo $regcred > $HOME/.docker/config.json
+      run: mkdir $HOME/.docker && echo $regcred > $_/config.json
     - name: Push the Docker image to the DockerHub
       run: docker push xtraterrestreal/talos-ci  
