@@ -1,0 +1,18 @@
+name: Docker Image CI
+
+on: [push]
+
+jobs:
+
+  build_and_push:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag xtraterrestreal/talos-ci:$GITHUB_SHA
+    - name: Login to DockerHub
+      run: mkdir $HOME/.docker && echo $regcred > $HOME/.docker/config.json
+    - name: Push the Docker image to the DockerHub
+      run: docker push xtraterrestreal/talos-ci  
