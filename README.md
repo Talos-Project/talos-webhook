@@ -16,7 +16,7 @@ Because of its high modularity, every use case is a plugin. You can choose one o
 
 Or you can implement functionality for your business needs by writing your plugin. For such a case, you can start from forking [talos-plugin-boilerplate](https://github.com/aspartame21/talos-plugin-boilerplate).
 
-## Installation
+## Getting Started
 
 ### Node Environment
 Talos requires [Node.js](https://nodejs.org) v8+ to run.
@@ -44,6 +44,16 @@ npm i <plugin name>
 Following the [guide](#Configuration) configure the project and run
 ```bash
 npm start
+```
+
+### Docker
+Make sure you are logged in to docker.pkg.github.com from docker-cli. If you don't generate a Github OAuth token and use the following command to login
+```bash
+docker login docker.pkg.github.com -u <Github Username> -p <Github OAuth token>
+```
+Prepare the [config file](#Configuration) and run the following command
+``` bash
+docker run -v "$PWD/.config.yaml:/usr/src/app/.config.yaml" -p 3000:3000 docker.pkg.github.com/aspartame21/talos/talos-webhook-full
 ```
 
 ## Configuration
