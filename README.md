@@ -19,6 +19,28 @@ Or you can implement functionality for your business needs by writing your plugi
 
 ## Installation
 ### Node Environment
+Talos requires [Node.js](https://nodejs.org) v8+ to run.
+
+Clone the repo and cd into it
+```bash
+git clone https://github.com/aspartame21/talos.git talos && cd $_
+```
+Install dependencies
+```bash
+npm i
+```
+Build the project
+```bash
+npm run build
+```
+If you are using Gitlab install gitlab-client
+```bash
+npm i talos-gitlab-client
+```
+Install plugins you want to include to your project (optional)
+```bash
+npm i <plugin name>
+```
 
 ### Docker Swarm
 
