@@ -13,11 +13,10 @@ Because of its high modularity, every use case is a plugin. You can choose one o
 - [talos-approve](https://github.com/aspartame21/talos-approve)
 - [talos-caturday](https://github.com/aspartame21/talos-caturday)
 
-Or you can implement functionality for your business needs by writing your plugin. For such case you can start from forking [talos-plugin-boilerplate](https://github.com/aspartame21/talos-plugin-boilerplate).
-
-## Use cases
+Or you can implement functionality for your business needs by writing your plugin. For such a case, you can start from forking [talos-plugin-boilerplate](https://github.com/aspartame21/talos-plugin-boilerplate).
 
 ## Installation
+
 ### Node Environment
 Talos requires [Node.js](https://nodejs.org) v8+ to run.
 
@@ -41,14 +40,29 @@ Install plugins you want to include to your project (optional)
 ```bash
 npm i <plugin name>
 ```
-
-### Docker Swarm
-
-### Kubernetes
+Following the [guide](#Configuration) configure the project and run
+```bash
+npm start
+```
 
 ## Configuration
-## Contribution
+Create a file with name `.talos.yaml` and populate it with values. You can see all the [configuration options](#Configuration-Options) bellow.
 
+### Configuration Options
+Name | Description | Default Value
+--- | --- | ---
+git.client | Git Client Provider | talos-gitlab-client
+git.host | Host of git server | https://gitlab.com/
+git.token |  OAuth Token to perform actions | -
+plugins | Plugins for webhook | []
+> **Tip:**
+> You can use `.talos.example.yaml` file as a reference
+
+## Contribution
+If you want to help the project grab an issue and send us a pull request :wink:
+
+## Support
+If you have any questions file an [issue](https://github.com/aspartame21/talos/issues) or join our [slack workspace](https://join.slack.com/t/talos-project/shared_invite/enQtODUyMTAyMDAzMzAwLTliNmNhZTk0NGQ0OTA4MGNlYTdiZDk2ZDEzMmI3NjJjZWUyNTNkYjU4ODE1NjI1NWYyNTk3MDA3MWU2MzRhODY).
 
 ## License
 
