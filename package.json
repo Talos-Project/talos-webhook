@@ -1,7 +1,7 @@
 {
-  "name": "gitlab-prow",
+  "name": "talos",
   "version": "1.0.0",
-  "description": "",
+  "description": "Talos CI is a webhook based application that is mainly focused on providing some extensions to existing platforms and automation for some events.",
   "scripts": {
     "start": "node build/Entrypoint.js",
     "build": "tsc",

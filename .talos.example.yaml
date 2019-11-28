@@ -1,13 +1,21 @@
+# Configuration for Git Client
 git:
+  # Git Client Provider
   client: talos-gitlab-client
+  # Host of git server
   host: https://gitlab.com/
+  # OAuth Token to perform actions
+  # It is recommended to use a separate user
   token: <OAuth Token>
 
-plugins:
-- talos-caturday
-- talos-plugin-boilerplate
-- talos-welcome
-- talos-blunderbuss
-- talos-lgtm
-- talos-approve
-- talos-testrunner
+# Plugins for webhook
+plugins: []
+# Uncomment plugins you want to you 
+# and install them using npm
+# - talos-caturday
+# - talos-plugin-boilerplate
+# - talos-welcome
+# - talos-blunderbuss
+# - talos-lgtm
+# - talos-approve
+# - talos-testrunner
