@@ -1,5 +1,5 @@
 # Talos CI
-![](https://github.com/aspartame21/talos/workflows/Docker%20Image%20CI/badge.svg)
+[![Docker Image CI](https://github.com/aspartame21/talos/workflows/Docker%20Image%20CI/badge.svg)](https://github.com/aspartame21/talos/packages/)
 [![Maintainability](https://api.codeclimate.com/v1/badges/7bfaa50447194347659a/maintainability)](https://codeclimate.com/github/aspartame21/talos/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/7bfaa50447194347659a/test_coverage)](https://codeclimate.com/github/aspartame21/talos/test_coverage)
 
