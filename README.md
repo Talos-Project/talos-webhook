@@ -53,7 +53,7 @@ docker login docker.pkg.github.com -u <Github Username> -p <Github OAuth token>
 ```
 Prepare the [config file](#Configuration) and run the following command
 ``` bash
-docker run -v "$PWD/.config.yaml:/usr/src/app/.config.yaml" -p 3000:3000 docker.pkg.github.com/aspartame21/talos/talos-webhook-full
+docker run -v "$PWD/.talos.yaml:/usr/src/app/.talos.yaml" -p 3000:3000 docker.pkg.github.com/aspartame21/talos/talos-webhook
 ```
 
 ## Configuration
