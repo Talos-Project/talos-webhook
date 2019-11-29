@@ -1,0 +1,33 @@
+name: Test Coverage
+
+on:
+  push:
+    branches:
+      - master
+
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [10.x]
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: npm install, build, and test
+      run: |
+        git checkout -b master
+        wget -o /dev/null -O cc-test-reporter https://codeclimate.com/downloads/test-reporter/test-reporter-0.6.3-linux-amd64
+        chmod +x cc-test-reporter
+        npm i
+        ./cc-test-reporter before-build
+        cp .talos.example.yaml .talos.yaml
+        npm run test
+        ./cc-test-reporter after-build -r ${{ secrets.CC_TEST_REPORTER_ID }}
