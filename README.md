@@ -1,8 +1,7 @@
 # Talos CI
 [![Docker Image CI](https://github.com/aspartame21/talos/workflows/Docker%20Image%20CI/badge.svg)](https://github.com/aspartame21/talos/packages/)
-[![Maintainability](https://api.codeclimate.com/v1/badges/7bfaa50447194347659a/maintainability)](https://codeclimate.com/github/aspartame21/talos/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/7bfaa50447194347659a/test_coverage)](https://codeclimate.com/github/aspartame21/talos/test_coverage)
-
+[![Maintainability](https://api.codeclimate.com/v1/badges/364696670d5fdc69a5ca/maintainability)](https://codeclimate.com/github/Talos-Project/talos-webhook/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/364696670d5fdc69a5ca/test_coverage)](https://codeclimate.com/github/Talos-Project/talos-webhook/test_coverage)
 
 Talos CI is a webhook based application that is mainly focused on providing some extensions to existing platforms and automation for some events. 
 Because of its high modularity, every use case is a plugin. You can choose one of the existing plugins:

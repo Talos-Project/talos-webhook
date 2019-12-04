@@ -39,7 +39,7 @@
     "talos-caturday": "^1.0.2",
     "talos-gitlab-client": "^1.0.7",
     "talos-lgtm": "^0.1.0",
-    "talos-testrunner": "^0.2.2",
+    "talos-testrunner": "^0.2.5",
     "talos-welcome": "^0.1.2",
     "typescript": "^3.6.2",
     "yaml": "^1.6.0"
